@@ -50,19 +50,23 @@ int main(int argc, char* argv[])
     {
       std::cout << "Connection accepted" << std::endl;
 
-      boost::beast::http::async_read(socket, buffer, req, [&ioc](boost::beast::error_code ec, std::size_t bytes)
+      bool loop = true;
+
+      boost::beast::http::async_read(socket, buffer, req, [&ioc, &loop](boost::beast::error_code ec, std::size_t bytes)
       {
         if (ec)
         {
           std::cout << "read error" << std::endl;
+          loop = false;
         }
         else
         {
           std::cout << "read success: " << bytes << std::endl;
+          loop = false;
         }
       });
 
-      while( true ) { ioc.run(); }
+      while( loop ) { ioc.run(); }
     });
 
     while( true ) { ioc.run(); }
