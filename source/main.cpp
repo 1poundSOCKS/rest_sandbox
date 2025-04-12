@@ -8,12 +8,10 @@ int main(int argc, char* argv[])
     unsigned short port = 14571;
 
     boost::asio::io_context ioc(1);
-    // ioc.run();
 
     boost::beast::error_code ec;
 
-    auto strand = boost::asio::make_strand(ioc);
-    boost::asio::ip::tcp::acceptor acceptor(strand);
+    boost::asio::ip::tcp::acceptor acceptor(boost::asio::make_strand(ioc));
 
     auto endpoint = boost::asio::ip::tcp::endpoint(address, port);
 
@@ -44,6 +42,13 @@ int main(int argc, char* argv[])
         std::cout  << "Listen error: " << ec.message() << std::endl;
         return 0;
     }
+
+    acceptor.async_accept(boost::asio::make_strand(ioc), [](boost::beast::error_code ec, boost::asio::ip::tcp::socket socket)
+    {
+      std::cout << "Connection accepted" << std::endl;
+    });
+
+    ioc.run();
   }
   catch (const std::exception& e)
   {
