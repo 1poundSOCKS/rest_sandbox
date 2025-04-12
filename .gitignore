@@ -32,5 +32,15 @@
 *.app
 
 # project
+/.vscode
 /bin
 /build
+/CMakeFiles
+/lib
+/rest_sandbox.dir
+/x64
+*.vcxproj
+*.vcxproj.filters
+*.cmake
+CMakeCache.txt
+*.sln
