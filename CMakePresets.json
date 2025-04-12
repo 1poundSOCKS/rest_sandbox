@@ -1,0 +1,34 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "windows-dbg",
+      "displayName": "Windows",
+      "generator": "Visual Studio 17 2022",
+      "binaryDir": "bin/Debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "environment": {
+        "COMPILE-OPTIONS": "/MP /MTd /Zi /W0 /WX /fp:fast /std:c++latest /EHsc",
+        "COMPILE-DEFINITIONS": "",
+        "LINK-OPTIONS": "/SUBSYSTEM:CONSOLE",
+        "BINARY-RESOURCES": ""
+      }
+    },
+    {
+      "name": "linux-dbg",
+      "displayName": "Linux",
+      "generator": "Unix Makefiles",
+      "binaryDir": "bin/Debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "environment": {
+        "COMPILE-OPTIONS": "",
+        "COMPILE-DEFINITIONS": "",
+        "LINK-OPTIONS": ""
+      }
+    }
+  ]
+}
