@@ -1,30 +1,7 @@
 #include "pch.h"
 
-void OnConnect(boost::asio::ip::tcp::socket& socket)
-{
-  boost::beast::flat_buffer buffer;
-  boost::beast::http::request<boost::beast::http::string_body> req;  
-  bool terminate = false;
-
-  boost::beast::http::async_read(socket, buffer, req, [&terminate](boost::beast::error_code ec, std::size_t bytes)
-  {
-    if (ec)
-    {
-      terminate = true;
-    }
-    {
-      std::cout << "Bytes read: " << bytes << std::endl;
-    }
-  });
-
-  socket.close();
-
-  uint64_t contentLength;
-  req.content_length(contentLength);
-  std::cout << "Content length: " << contentLength << std::endl;
-
-  std::cout << "OnConnect exit" << std::endl;
-}
+boost::beast::flat_buffer buffer;
+boost::beast::http::request<boost::beast::http::string_body> req;  
 
 int main(int argc, char* argv[])
 {
@@ -69,11 +46,23 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    acceptor.async_accept(boost::asio::make_strand(ioc), [](boost::beast::error_code ec, boost::asio::ip::tcp::socket socket)
+    acceptor.async_accept(boost::asio::make_strand(ioc), [&ioc](boost::beast::error_code ec, boost::asio::ip::tcp::socket socket)
     {
       std::cout << "Connection accepted" << std::endl;
-      OnConnect(socket);
-      std::cout << "Connection done" << std::endl;
+
+      boost::beast::http::async_read(socket, buffer, req, [&ioc](boost::beast::error_code ec, std::size_t bytes)
+      {
+        if (ec)
+        {
+          std::cout << "read error" << std::endl;
+        }
+        else
+        {
+          std::cout << "read success: " << bytes << std::endl;
+        }
+      });
+
+      while( true ) { ioc.run(); }
     });
 
     while( true ) { ioc.run(); }
