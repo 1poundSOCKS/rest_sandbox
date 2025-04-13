@@ -112,6 +112,13 @@ boost::beast::http::response<boost::beast::http::string_body> GetResponse(boost:
   try
   {
     nlohmann::json requestJson = nlohmann::json::parse(req.body());
+    boost::beast::http::response<boost::beast::http::string_body> res(boost::beast::http::status::ok, req.version());
+    res.set(boost::beast::http::field::server, "Beast");
+    res.set(boost::beast::http::field::content_type, "text/json");
+    res.keep_alive(req.keep_alive());
+    res.body() = req.body();
+    res.prepare_payload();
+    return res;
   }
   catch( ... )
   {
@@ -128,12 +135,4 @@ boost::beast::http::response<boost::beast::http::string_body> GetResponse(boost:
     res.prepare_payload();
     return res;
   }
-
-  boost::beast::http::response<boost::beast::http::string_body> res(boost::beast::http::status::ok, req.version());
-  res.set(boost::beast::http::field::server, "Beast");
-  res.set(boost::beast::http::field::content_type, "text/json");
-  res.keep_alive(req.keep_alive());
-  res.body() = req.body();
-  res.prepare_payload();
-  return res;
 }
