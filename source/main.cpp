@@ -101,7 +101,8 @@ void WriteResponse(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& s
 {
   boost::beast::http::response<boost::beast::http::string_body> res { FormatResponse(req) };
 
-  boost::beast::http::async_write(socket, res, [&socket](boost::beast::error_code ec, std::size_t) {
+  boost::beast::http::async_write(socket, res, [&socket](boost::beast::error_code ec, std::size_t)
+  {
       socket.shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
   });
 
