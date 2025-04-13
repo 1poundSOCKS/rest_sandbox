@@ -1,9 +1,9 @@
 #include "pch.h"
 
 void AcceptConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::acceptor& acceptor);
-void AsyncRead(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& socket);
+void ReadRequest(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& socket);
 void WriteResponse(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& socket, boost::beast::http::request<boost::beast::http::string_body>& req);
-boost::beast::http::response<boost::beast::http::string_body> GetResponse(boost::beast::http::request<boost::beast::http::string_body>& req);
+boost::beast::http::response<boost::beast::http::string_body> FormatResponse(boost::beast::http::request<boost::beast::http::string_body>& req);
 
 int main(int argc, char* argv[])
 {
@@ -70,12 +70,12 @@ void AcceptConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::accept
   {
     std::cout << "Connection accepted" << std::endl;
     AcceptConnection(ioc, acceptor);
-    AsyncRead(ioc, socket);
+    ReadRequest(ioc, socket);
     ioc.run();
   });
 }
 
-void AsyncRead(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& socket)
+void ReadRequest(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& socket)
 {
   boost::beast::flat_buffer buffer;
   boost::beast::http::request<boost::beast::http::string_body> req;
@@ -98,7 +98,7 @@ void AsyncRead(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& socke
 
 void WriteResponse(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& socket, boost::beast::http::request<boost::beast::http::string_body>& req)
 {
-  boost::beast::http::response<boost::beast::http::string_body> res { GetResponse(req) };
+  boost::beast::http::response<boost::beast::http::string_body> res { FormatResponse(req) };
 
   boost::beast::http::async_write(socket, res, [&socket](boost::beast::error_code ec, std::size_t) {
       socket.shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
@@ -107,7 +107,7 @@ void WriteResponse(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& s
   ioc.run();
 }
 
-boost::beast::http::response<boost::beast::http::string_body> GetResponse(boost::beast::http::request<boost::beast::http::string_body>& req)
+boost::beast::http::response<boost::beast::http::string_body> FormatResponse(boost::beast::http::request<boost::beast::http::string_body>& req)
 {
   try
   {
