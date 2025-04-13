@@ -4,6 +4,7 @@ void AcceptConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::accept
 void ReadRequest(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& socket);
 void WriteResponse(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& socket, boost::beast::http::request<boost::beast::http::string_body>& req);
 boost::beast::http::response<boost::beast::http::string_body> FormatResponse(boost::beast::http::request<boost::beast::http::string_body>& req);
+boost::beast::http::response<boost::beast::http::string_body> FormatErrorResponse(boost::beast::http::request<boost::beast::http::string_body>& req);
 
 int main(int argc, char* argv[])
 {
@@ -116,17 +117,7 @@ boost::beast::http::response<boost::beast::http::string_body> FormatResponse(boo
   catch( ... )
   {
     std::cout << "exception\n";
-    boost::beast::http::response<boost::beast::http::string_body> res(boost::beast::http::status::ok, req.version());
-    res.set(boost::beast::http::field::server, "Beast");
-    res.set(boost::beast::http::field::content_type, "text/json");
-    nlohmann::json responseJson = 
-    {
-         {"error", "request body invalid"}
-    };
-
-    res.body() = to_string(responseJson);
-    res.prepare_payload();
-    return res;
+    return FormatErrorResponse(req);
   }
 
   boost::beast::http::response<boost::beast::http::string_body> res(boost::beast::http::status::ok, req.version());
@@ -134,6 +125,22 @@ boost::beast::http::response<boost::beast::http::string_body> FormatResponse(boo
   res.set(boost::beast::http::field::content_type, "text/json");
   res.keep_alive(req.keep_alive());
   res.body() = req.body();
+  res.prepare_payload();
+  return res;
+}
+
+boost::beast::http::response<boost::beast::http::string_body> FormatErrorResponse(boost::beast::http::request<boost::beast::http::string_body>& req)
+{
+  boost::beast::http::response<boost::beast::http::string_body> res(boost::beast::http::status::ok, req.version());
+  res.set(boost::beast::http::field::server, "Beast");
+  res.set(boost::beast::http::field::content_type, "text/json");
+
+  nlohmann::json responseJson = 
+  {
+      {"error", "request body invalid"}
+  };
+
+  res.body() = to_string(responseJson);
   res.prepare_payload();
   return res;
 }
