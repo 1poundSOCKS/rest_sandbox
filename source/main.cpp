@@ -109,6 +109,21 @@ void WriteResponse(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& s
 
 boost::beast::http::response<boost::beast::http::string_body> GetResponse(boost::beast::http::request<boost::beast::http::string_body>& req)
 {
+  try
+  {
+    nlohmann::json j = nlohmann::json::parse(req.body());
+
+    if( j.contains("key1") )
+    {
+      auto key1Val = j.at("key1");
+      std::cout << key1Val << "\n";
+    }
+  }
+  catch( ... )
+  {
+    std::cout << "exception\n";
+  }
+
   boost::beast::http::response<boost::beast::http::string_body> res(boost::beast::http::status::ok, req.version());
   res.set(boost::beast::http::field::server, "Beast");
   res.set(boost::beast::http::field::content_type, "text/plain");

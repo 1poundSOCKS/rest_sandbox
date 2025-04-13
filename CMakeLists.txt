@@ -28,4 +28,5 @@ target_include_directories(rest_sandbox PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/source
   $ENV{BOOST_ASIO_INCLUDE}
   $ENV{BOOST_BEAST_INCLUDE}
+  $ENV{NLOHMANN_JSON_INCLUDE}
 )
