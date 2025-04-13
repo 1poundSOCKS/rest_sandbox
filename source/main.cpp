@@ -3,6 +3,7 @@
 void AcceptConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::acceptor& acceptor);
 void AsyncRead(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& socket);
 void WriteResponse(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& socket, boost::beast::http::request<boost::beast::http::string_body>& req);
+boost::beast::http::response<boost::beast::http::string_body> GetResponse(boost::beast::http::request<boost::beast::http::string_body>& req);
 
 int main(int argc, char* argv[])
 {
@@ -97,16 +98,22 @@ void AsyncRead(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& socke
 
 void WriteResponse(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& socket, boost::beast::http::request<boost::beast::http::string_body>& req)
 {
-  boost::beast::http::response<boost::beast::http::string_body> res(boost::beast::http::status::ok, req.version());
-  res.set(boost::beast::http::field::server, "Beast");
-  res.set(boost::beast::http::field::content_type, "text/plain");
-  res.keep_alive(req.keep_alive());
-  res.body() = "Hello, World!";
-  res.prepare_payload();
+  boost::beast::http::response<boost::beast::http::string_body> res { GetResponse(req) };
 
   boost::beast::http::async_write(socket, res, [&socket](boost::beast::error_code ec, std::size_t) {
       socket.shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
   });
 
   ioc.run();
+}
+
+boost::beast::http::response<boost::beast::http::string_body> GetResponse(boost::beast::http::request<boost::beast::http::string_body>& req)
+{
+  boost::beast::http::response<boost::beast::http::string_body> res(boost::beast::http::status::ok, req.version());
+  res.set(boost::beast::http::field::server, "Beast");
+  res.set(boost::beast::http::field::content_type, "text/plain");
+  res.keep_alive(req.keep_alive());
+  res.body() = req.body();
+  res.prepare_payload();
+  return res;
 }
