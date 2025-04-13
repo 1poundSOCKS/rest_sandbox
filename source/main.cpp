@@ -111,22 +111,27 @@ boost::beast::http::response<boost::beast::http::string_body> GetResponse(boost:
 {
   try
   {
-    nlohmann::json j = nlohmann::json::parse(req.body());
-
-    if( j.contains("key1") )
-    {
-      auto key1Val = j.at("key1");
-      std::cout << key1Val << "\n";
-    }
+    nlohmann::json requestJson = nlohmann::json::parse(req.body());
   }
   catch( ... )
   {
     std::cout << "exception\n";
+    boost::beast::http::response<boost::beast::http::string_body> res(boost::beast::http::status::ok, req.version());
+    res.set(boost::beast::http::field::server, "Beast");
+    res.set(boost::beast::http::field::content_type, "text/json");
+    nlohmann::json responseJson = 
+    {
+         {"error", "request body invalid"}
+    };
+
+    res.body() = to_string(responseJson);
+    res.prepare_payload();
+    return res;
   }
 
   boost::beast::http::response<boost::beast::http::string_body> res(boost::beast::http::status::ok, req.version());
   res.set(boost::beast::http::field::server, "Beast");
-  res.set(boost::beast::http::field::content_type, "text/plain");
+  res.set(boost::beast::http::field::content_type, "text/json");
   res.keep_alive(req.keep_alive());
   res.body() = req.body();
   res.prepare_payload();
