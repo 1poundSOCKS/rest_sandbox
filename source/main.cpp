@@ -1,10 +1,8 @@
 #include "pch.h"
 
-boost::beast::flat_buffer buffer;
-boost::beast::http::request<boost::beast::http::string_body> req;
-
 void AcceptConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::acceptor& acceptor);
-void AsyncRead(boost::asio::ip::tcp::socket& socket);
+void AsyncRead(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& socket);
+void WriteResponse(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& socket, boost::beast::http::request<boost::beast::http::string_body>& req);
 
 int main(int argc, char* argv[])
 {
@@ -70,16 +68,18 @@ void AcceptConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::accept
   acceptor.async_accept(boost::asio::make_strand(ioc), [&ioc,&acceptor](boost::beast::error_code ec, boost::asio::ip::tcp::socket socket)
   {
     std::cout << "Connection accepted" << std::endl;
-
     AcceptConnection(ioc, acceptor);
-    AsyncRead(socket);
+    AsyncRead(ioc, socket);
     ioc.run();
   });
 }
 
-void AsyncRead(boost::asio::ip::tcp::socket& socket)
+void AsyncRead(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& socket)
 {
-  boost::beast::http::async_read(socket, buffer, req, [](boost::beast::error_code ec, std::size_t bytes)
+  boost::beast::flat_buffer buffer;
+  boost::beast::http::request<boost::beast::http::string_body> req;
+
+  boost::beast::http::async_read(socket, buffer, req, [&ioc,&socket,&req](boost::beast::error_code ec, std::size_t bytes)
   {
     if (ec)
     {
@@ -88,6 +88,25 @@ void AsyncRead(boost::asio::ip::tcp::socket& socket)
     else
     {
       std::cout << "read success: " << bytes << std::endl;
+      WriteResponse(ioc, socket, req);
     }
   });
+
+  ioc.run();
+}
+
+void WriteResponse(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& socket, boost::beast::http::request<boost::beast::http::string_body>& req)
+{
+  boost::beast::http::response<boost::beast::http::string_body> res(boost::beast::http::status::ok, req.version());
+  res.set(boost::beast::http::field::server, "Beast");
+  res.set(boost::beast::http::field::content_type, "text/plain");
+  res.keep_alive(req.keep_alive());
+  res.body() = "Hello, World!";
+  res.prepare_payload();
+
+  boost::beast::http::async_write(socket, res, [&socket](boost::beast::error_code ec, std::size_t) {
+      socket.shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
+  });
+
+  ioc.run();
 }
