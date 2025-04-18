@@ -1,0 +1,1 @@
+curl.exe -X POST -d "@request.json" http://localhost:8080
