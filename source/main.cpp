@@ -50,11 +50,11 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    bool loop = true;
-
-    AcceptConnection(ioc, acceptor);
-
-    ioc.run();
+    while( true )
+    {
+      AcceptConnection(ioc, acceptor);
+      ioc.run();
+    }
 
     std::cout << "Terminating" << std::endl;
   }
@@ -73,6 +73,7 @@ void AcceptConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::accept
     std::cout << "Connection accepted" << std::endl;
     AcceptConnection(ioc, acceptor);
     ReadRequest(ioc, socket);
+    std::cout << "request read\n";
     ioc.run();
   });
 }
@@ -90,8 +91,9 @@ void ReadRequest(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& soc
     }
     else
     {
-      std::cout << "read success: " << bytes << std::endl;
+      std::cout << "read success: " << bytes << "\n";
       WriteResponse(ioc, socket, req);
+      std::cout << "Response written\n";
     }
   });
 
@@ -102,11 +104,12 @@ void WriteResponse(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& s
 {
     boost::beast::http::response<boost::beast::http::string_body> res { FormatResponse(ioc, req) };
 
-    boost::beast::http::async_write(socket, res, [&socket](boost::beast::error_code ec, std::size_t)
+    boost::beast::http::async_write(socket, res, [&ioc, &socket](boost::beast::error_code ec, std::size_t)
     {
-        socket.shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
+      ec.failed() ? std::cout << "async write failed\n" : std::cout << "async write succeeded\n";
+      socket.shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
     });
-  
+
     ioc.run();
 }
 
