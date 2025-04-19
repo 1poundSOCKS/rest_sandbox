@@ -5,7 +5,7 @@ void ReadRequest(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& soc
 void WriteResponse(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& socket, boost::beast::http::request<boost::beast::http::string_body>& req);
 boost::beast::http::response<boost::beast::http::string_body> FormatResponse(boost::asio::io_context& ioc, boost::beast::http::request<boost::beast::http::string_body>& req);
 boost::beast::http::response<boost::beast::http::string_body> FormatErrorResponse(boost::beast::http::request<boost::beast::http::string_body>& req);
-void CallServer(boost::asio::io_context& ioc);
+boost::beast::http::response<boost::beast::http::dynamic_body> CallServer(boost::asio::io_context& ioc);
 
 int main(int argc, char* argv[])
 {
@@ -100,14 +100,14 @@ void ReadRequest(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& soc
 
 void WriteResponse(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& socket, boost::beast::http::request<boost::beast::http::string_body>& req)
 {
-  boost::beast::http::response<boost::beast::http::string_body> res { FormatResponse(ioc, req) };
+    boost::beast::http::response<boost::beast::http::string_body> res { FormatResponse(ioc, req) };
 
-  boost::beast::http::async_write(socket, res, [&socket](boost::beast::error_code ec, std::size_t)
-  {
-      socket.shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
-  });
-
-  ioc.run();
+    boost::beast::http::async_write(socket, res, [&socket](boost::beast::error_code ec, std::size_t)
+    {
+        socket.shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
+    });
+  
+    ioc.run();
 }
 
 boost::beast::http::response<boost::beast::http::string_body> FormatResponse(boost::asio::io_context& ioc, boost::beast::http::request<boost::beast::http::string_body>& req)
@@ -115,22 +115,30 @@ boost::beast::http::response<boost::beast::http::string_body> FormatResponse(boo
   try
   {
     nlohmann::json requestJson = nlohmann::json::parse(req.body());
+
+    auto response = CallServer(ioc);
+    auto responseBody = response.body();
+    auto responseString = boost::beast::buffers_to_string(responseBody.data());
+  
+    boost::beast::http::response<boost::beast::http::string_body> res(boost::beast::http::status::ok, req.version());
+    res.set(boost::beast::http::field::server, "Beast");
+    res.set(boost::beast::http::field::content_type, "text/json");
+    res.keep_alive(req.keep_alive());
+  
+    res.body() = responseString;
+    res.prepare_payload();
+    return res;
+  }
+  catch( boost::system::system_error& err )
+  {
+    std::cout << err.what() << "\n";
+    return FormatErrorResponse(req);
   }
   catch( ... )
   {
-    std::cout << "failed to parse request body\n";
+    std::cout << "exception\n";
     return FormatErrorResponse(req);
   }
-
-  CallServer(ioc);
-
-  boost::beast::http::response<boost::beast::http::string_body> res(boost::beast::http::status::ok, req.version());
-  res.set(boost::beast::http::field::server, "Beast");
-  res.set(boost::beast::http::field::content_type, "text/json");
-  res.keep_alive(req.keep_alive());
-  res.body() = req.body();
-  res.prepare_payload();
-  return res;
 }
 
 boost::beast::http::response<boost::beast::http::string_body> FormatErrorResponse(boost::beast::http::request<boost::beast::http::string_body>& req)
@@ -141,7 +149,7 @@ boost::beast::http::response<boost::beast::http::string_body> FormatErrorRespons
 
   nlohmann::json responseJson = 
   {
-      {"error", "request body invalid"}
+      { "error", "exception getting response" }
   };
 
   res.body() = to_string(responseJson);
@@ -149,40 +157,30 @@ boost::beast::http::response<boost::beast::http::string_body> FormatErrorRespons
   return res;
 }
 
-void CallServer(boost::asio::io_context& ioc)
+boost::beast::http::response<boost::beast::http::dynamic_body> CallServer(boost::asio::io_context& ioc)
 {
-  try
-  {
-    std::string host = "httpbin.org";
-    std::string port = "80";
+  std::string host = "httpbin.org";
+  std::string port = "80";
 
-    boost::asio::ip::tcp::resolver resolver(ioc);
-    auto hostIterator = resolver.resolve(host, port);
+  boost::asio::ip::tcp::resolver resolver(ioc);
+  auto hostIterator = resolver.resolve(host, port);
 
-    auto serverName = std::begin(hostIterator)->service_name();
-    auto hostName = std::begin(hostIterator)->host_name();
-    auto endpoint = std::begin(hostIterator)->endpoint();
+  auto endpoint = std::begin(hostIterator)->endpoint();
 
-    boost::beast::tcp_stream stream(ioc);
-    stream.connect(endpoint);
+  boost::beast::tcp_stream stream(ioc);
+  stream.connect(endpoint);
 
-    boost::beast::http::request<boost::beast::http::string_body> req{boost::beast::http::verb::get, "/ip", 10};
-    req.set(boost::beast::http::field::host, host);
-    req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+  boost::beast::http::request<boost::beast::http::string_body> req{boost::beast::http::verb::get, "/ip", 10};
+  req.set(boost::beast::http::field::host, host);
+  req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
 
-    boost::beast::http::write(stream, req);
+  boost::beast::http::write(stream, req);
 
-    boost::beast::flat_buffer buffer;
-    boost::beast::http::response<boost::beast::http::dynamic_body> res;
-    boost::beast::http::read(stream, buffer, res);
+  boost::beast::flat_buffer buffer;
+  boost::beast::http::response<boost::beast::http::dynamic_body> res;
+  boost::beast::http::read(stream, buffer, res);
 
-    std::cout << res << "\n";
-  }
-  catch( boost::system::system_error& err )
-  {
-    std::cout << err.what() << "\n";
-  }
-  catch( ... )
-  {
-  }
+  std::cout << res << "\n";
+
+  return res;
 }
