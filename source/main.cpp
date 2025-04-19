@@ -52,6 +52,8 @@ int main(int argc, char* argv[])
     }
 
     AcceptConnection(ioc, acceptor);
+    AcceptConnection(ioc, acceptor);
+    AcceptConnection(ioc, acceptor);
 
     ioc.run();
 
