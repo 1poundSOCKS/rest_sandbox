@@ -51,11 +51,17 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    AcceptConnection(ioc, acceptor);
-    AcceptConnection(ioc, acceptor);
-    AcceptConnection(ioc, acceptor);
+    std::thread worker([&ioc, &acceptor]()
+    {
+      AcceptConnection(ioc, acceptor);
+      ioc.run();      
+    });
 
-    ioc.run();
+    std::string input;
+    std::getline(std::cin, input);
+
+    ioc.stop();
+    worker.join();
 
     std::cout << "Terminating" << std::endl;
   }
