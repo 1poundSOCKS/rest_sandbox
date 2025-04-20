@@ -79,8 +79,6 @@ void AcceptConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::accept
   {
     std::cout << "Connection accepted" << std::endl;
     ReadRequest(ioc, acceptor, socket);
-    std::cout << "request read\n";
-    ioc.run();
   });
 }
 
@@ -97,9 +95,8 @@ void ReadRequest(boost::asio::io_context& ioc, boost::asio::ip::tcp::acceptor& a
     }
     else
     {
-      std::cout << "read success: " << bytes << "\n";
+      std::cout << "read success: " << bytes << " bytes\n";
       WriteResponse(ioc, acceptor, socket, req);
-      std::cout << "Response written\n";
     }
   });
 
