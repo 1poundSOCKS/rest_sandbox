@@ -86,6 +86,12 @@ namespace async_connection_handler
   {
     acceptor.async_accept(boost::asio::make_strand(ioc), [&ioc,&acceptor,&processRequest](boost::beast::error_code ec, boost::asio::ip::tcp::socket socket)
     {
+      if( ec.failed() )
+      {
+        std::cout << "accept failed\n";
+        return;
+      }
+
       std::cout << "Connection accepted\n";
 
       std::shared_ptr<session_data> sessionData = std::make_shared<session_data>(socket);
@@ -95,20 +101,19 @@ namespace async_connection_handler
         if( ec.failed() )
         {
           std::cout << "read error\n";
+          return;
         }
-        else
-        {
-          std::cout  << "read success: " << bytes << " bytes\n";
 
-          sessionData->response = processRequest(ioc, sessionData->request);
-          
-          boost::beast::http::async_write(sessionData->socket, sessionData->response, [&ioc,&acceptor,&processRequest,sessionData](boost::beast::error_code ec, std::size_t)
-          {
-            ec.failed() ? std::cout << "async write failed\n" : std::cout << "async write succeeded\n";
-            sessionData->socket.shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
-            acceptConnection(ioc, acceptor, processRequest);
-          });
-        }
+        std::cout  << "read success: " << bytes << " bytes\n";
+
+        sessionData->response = processRequest(ioc, sessionData->request);
+
+        boost::beast::http::async_write(sessionData->socket, sessionData->response, [&ioc,&acceptor,&processRequest,sessionData](boost::beast::error_code ec, std::size_t)
+        {
+          ec.failed() ? std::cout << "async write failed\n" : std::cout << "async write succeeded\n";
+          sessionData->socket.shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
+          acceptConnection(ioc, acceptor, processRequest);
+        });
       });
     });
   }
