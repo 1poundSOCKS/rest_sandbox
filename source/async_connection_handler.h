@@ -2,6 +2,17 @@
 
 namespace async_connection_handler
 {
+  struct global_data
+  {
+    global_data(int hint) : ioc(hint), acceptor(boost::asio::make_strand(ioc))
+    {
+    }
+
+    boost::asio::io_context ioc;
+    boost::asio::ip::tcp::acceptor acceptor;
+    std::unique_ptr<std::thread> worker;
+  };
+
   struct session_data
   {
     session_data(boost::asio::ip::tcp::socket& socket) : socket(std::move(socket))
@@ -14,64 +25,64 @@ namespace async_connection_handler
     boost::beast::http::response<boost::beast::http::string_body> response;
   };
   
-  void AcceptConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::acceptor& acceptor, auto&& processRequest);
+  void acceptConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::acceptor& acceptor, auto&& processRequest);
 
-  int run(auto&& requestHandler)
+  std::shared_ptr<global_data> globalData;
+
+  int start(unsigned short port, auto&& requestHandler)
   {
     auto const address =  boost::asio::ip::make_address("0.0.0.0");
-    unsigned short port = 8080;
 
-    boost::asio::io_context ioc(1);
+    globalData = std::make_shared<global_data>(1);
 
     boost::beast::error_code ec;
 
-    boost::asio::ip::tcp::acceptor acceptor(boost::asio::make_strand(ioc));
-
     auto endpoint = boost::asio::ip::tcp::endpoint(address, port);
 
-    acceptor.open(endpoint.protocol(), ec);
+    globalData->acceptor.open(endpoint.protocol(), ec);
     if (ec)
     {
         std::cout << "Set option error: " << ec.message() << "\n";
         return 0;
     }
 
-    acceptor.set_option(boost::asio::socket_base::reuse_address(true), ec);
+    globalData->acceptor.set_option(boost::asio::socket_base::reuse_address(true), ec);
     if (ec)
     {
         std::cout << "Set option error: " << ec.message() << "\n";
         return 0;
     }
 
-    acceptor.bind(endpoint, ec);
+    globalData->acceptor.bind(endpoint, ec);
     if (ec)
     {
         std::cout << "Bind error: " << ec.message() << "\n";
         return 0;
     }
 
-    acceptor.listen(boost::asio::socket_base::max_listen_connections, ec);
+    globalData->acceptor.listen(boost::asio::socket_base::max_listen_connections, ec);
     if (ec)
     {
         std::cout  << "Listen error: " << ec.message() << "\n";
         return 0;
     }
 
-    std::thread worker([&ioc,&acceptor,&requestHandler]()
+    globalData->worker = std::make_unique<std::thread>([&requestHandler]()
     {
-      AcceptConnection(ioc, acceptor, requestHandler);
-      ioc.run();
+      acceptConnection(globalData->ioc, globalData->acceptor, requestHandler);
+      globalData->ioc.run();
     });
 
-    std::string input;
-    std::getline(std::cin, input);
-
-    ioc.stop();
-    worker.join();
     return 0;
   }
 
-  void AcceptConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::acceptor& acceptor, auto&& processRequest)
+  void stop()
+  {
+    globalData->ioc.stop();
+    globalData->worker->join();
+  }
+
+  void acceptConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::acceptor& acceptor, auto&& processRequest)
   {
     acceptor.async_accept(boost::asio::make_strand(ioc), [&ioc,&acceptor,&processRequest](boost::beast::error_code ec, boost::asio::ip::tcp::socket socket)
     {
@@ -89,7 +100,7 @@ namespace async_connection_handler
         {
           ec.failed() ? std::cout << "async write failed\n" : std::cout << "async write succeeded\n";
           sessionData->socket.shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
-          AcceptConnection(ioc, acceptor, processRequest);
+          acceptConnection(ioc, acceptor, processRequest);
         });
       });
     });

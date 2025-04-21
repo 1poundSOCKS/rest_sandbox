@@ -12,7 +12,13 @@ int main(int argc, char* argv[])
 {
   try
   {
-    async_connection_handler::run(ProcessRequest);
+    async_connection_handler::start(8080, ProcessRequest);
+
+    std::string input;
+    std::getline(std::cin, input);
+
+    async_connection_handler::stop();
+
     std::cout << "Terminating" << std::endl;
   }
   catch (const std::exception& e)
