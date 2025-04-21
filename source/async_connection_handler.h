@@ -80,6 +80,7 @@ namespace async_connection_handler
   {
     globalData->ioc.stop();
     globalData->worker->join();
+    globalData.reset();
   }
 
   void acceptConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::acceptor& acceptor, auto&& processRequest)
