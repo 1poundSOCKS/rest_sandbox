@@ -1,17 +1,19 @@
 #include "pch.h"
 
+struct session_data
+{
+  session_data(boost::asio::ip::tcp::socket& socket);
+  boost::asio::ip::tcp::socket socket;
+  boost::beast::flat_buffer buffer;
+  boost::beast::http::request<boost::beast::http::string_body> request;
+  boost::beast::http::response<boost::beast::http::string_body> response;
+};
+
+inline session_data::session_data(boost::asio::ip::tcp::socket& socket) : socket(std::move(socket))
+{
+}
+
 void AcceptConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::acceptor& acceptor);
-
-void ProcessConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& socket);
-
-void ReadRequest(boost::asio::io_context& ioc, 
-  boost::asio::ip::tcp::socket& socket, 
-  boost::beast::flat_buffer& buffer, 
-  boost::beast::http::request<boost::beast::http::string_body>& req);
-
-void WriteResponse(boost::asio::io_context& ioc, 
-  boost::asio::ip::tcp::socket& socket, 
-  boost::beast::http::response<boost::beast::http::string_body>& res);
 
 boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, 
   boost::beast::http::request<boost::beast::http::string_body>& req);
@@ -90,45 +92,23 @@ void AcceptConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::accept
   acceptor.async_accept(boost::asio::make_strand(ioc), [&ioc,&acceptor](boost::beast::error_code ec, boost::asio::ip::tcp::socket socket)
   {
     std::cout << "Connection accepted\n";
-    ProcessConnection(ioc, socket);
-    AcceptConnection(ioc, acceptor);
-  });
-}
 
-void ProcessConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::socket& socket)
-{
-  boost::beast::flat_buffer buffer;
-  boost::beast::http::request<boost::beast::http::string_body> request;
+    std::shared_ptr<session_data> sessionData = std::make_shared<session_data>(socket);
 
-  ReadRequest(ioc, socket, buffer, request);
-  ioc.run_one();
-
-  boost::beast::http::response<boost::beast::http::string_body> response = ProcessRequest(ioc, request);
-
-  WriteResponse(ioc, socket, response);
-  ioc.run_one();
-}
-
-void ReadRequest(boost::asio::io_context& ioc, 
-  boost::asio::ip::tcp::socket& socket, 
-  boost::beast::flat_buffer& buffer, 
-  boost::beast::http::request<boost::beast::http::string_body>& req)
-{
-  boost::beast::http::async_read(socket, buffer, req, [&ioc,&socket,&req](boost::beast::error_code ec, std::size_t bytes)
-  {
-    ec.failed() ? std::cout << "read error\n" : std::cout  << "read success: " << bytes << " bytes\n";
-  });
-}
-
-void WriteResponse(boost::asio::io_context& ioc, 
-  boost::asio::ip::tcp::socket& socket, 
-  boost::beast::http::response<boost::beast::http::string_body>& res)
-{
-    boost::beast::http::async_write(socket, res, [&ioc,&socket](boost::beast::error_code ec, std::size_t)
+    boost::beast::http::async_read(sessionData->socket, sessionData->buffer, sessionData->request, [&ioc,&acceptor,sessionData](boost::beast::error_code ec, std::size_t bytes)
     {
-      ec.failed() ? std::cout << "async write failed\n" : std::cout << "async write succeeded\n";
-      socket.shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
+      ec.failed() ? std::cout << "read error\n" : std::cout  << "read success: " << bytes << " bytes\n";
+      
+      sessionData->response = ProcessRequest(ioc, sessionData->request);
+      
+      boost::beast::http::async_write(sessionData->socket, sessionData->response, [&ioc,&acceptor,sessionData](boost::beast::error_code ec, std::size_t)
+      {
+        ec.failed() ? std::cout << "async write failed\n" : std::cout << "async write succeeded\n";
+        sessionData->socket.shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
+        AcceptConnection(ioc, acceptor);
+      });
     });
+  });
 }
 
 boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, 
