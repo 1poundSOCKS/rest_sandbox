@@ -1,13 +1,26 @@
 #include "pch.h"
 #include "async_connection_handler.h"
 
-void requestHandler(boost::asio::io_context& ioc, std::shared_ptr<async_connection_handler::session_data> sessionData);
+boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, boost::beast::http::request<boost::beast::http::string_body>& request, boost::asio::ip::tcp::endpoint& endPoint);
+boost::beast::http::response<boost::beast::http::dynamic_body> CallServer(boost::asio::io_context& ioc, boost::asio::ip::tcp::endpoint& endpoint);
+boost::beast::http::response<boost::beast::http::string_body> FormatErrorResponse(boost::beast::http::request<boost::beast::http::string_body>& req);
+
+constexpr std::string_view host = "httpbin.org";
+constexpr std::string_view port = "80";
 
 int main(int argc, char* argv[])
 {
   try
   {
-    async_connection_handler::start(8080, requestHandler);
+    boost::asio::io_context ioc(1);
+    boost::asio::ip::tcp::resolver resolver(ioc);
+    auto hostIterator = resolver.resolve(host, port);
+    auto endpoint = std::begin(hostIterator)->endpoint();
+
+    async_connection_handler::start(8080, [&endpoint](boost::asio::io_context& ioc, std::shared_ptr<async_connection_handler::session_data> sessionData)
+    {
+      sessionData->response = ProcessRequest(ioc, sessionData->request, endpoint);
+    });
 
     std::string input;
     std::getline(std::cin, input);
@@ -24,23 +37,14 @@ int main(int argc, char* argv[])
   return 0;
 }
 
-boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, boost::beast::http::request<boost::beast::http::string_body>& req);
-boost::beast::http::response<boost::beast::http::dynamic_body> CallServer(boost::asio::io_context& ioc);
-boost::beast::http::response<boost::beast::http::string_body> FormatErrorResponse(boost::beast::http::request<boost::beast::http::string_body>& req);
-
-void requestHandler(boost::asio::io_context& ioc, std::shared_ptr<async_connection_handler::session_data> sessionData)
-{
-  sessionData->response = ProcessRequest(ioc, sessionData->request);
-}
-
 boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, 
-  boost::beast::http::request<boost::beast::http::string_body>& req)
+  boost::beast::http::request<boost::beast::http::string_body>& req, boost::asio::ip::tcp::endpoint& endpoint)
 {
   try
   {
     nlohmann::json requestJson = nlohmann::json::parse(req.body());
 
-    auto response = CallServer(ioc);
+    auto response = CallServer(ioc, endpoint);
     auto responseString = boost::beast::buffers_to_string(response.body().data());
 
     boost::beast::http::response<boost::beast::http::string_body> res(boost::beast::http::status::ok, req.version());
@@ -64,16 +68,8 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
   }
 }
 
-boost::beast::http::response<boost::beast::http::dynamic_body> CallServer(boost::asio::io_context& ioc)
+boost::beast::http::response<boost::beast::http::dynamic_body> CallServer(boost::asio::io_context& ioc, boost::asio::ip::tcp::endpoint& endpoint)
 {
-  std::string host = "httpbin.org";
-  std::string port = "80";
-
-  boost::asio::ip::tcp::resolver resolver(ioc);
-  auto hostIterator = resolver.resolve(host, port);
-
-  auto endpoint = std::begin(hostIterator)->endpoint();
-
   boost::beast::tcp_stream stream(ioc);
   stream.connect(endpoint);
 
