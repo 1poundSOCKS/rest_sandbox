@@ -90,6 +90,7 @@ namespace async_connection_handler
       if( ec.failed() )
       {
         std::cout << "accept failed\n";
+        acceptConnection(ioc, acceptor, processRequest);
         return;
       }
 
@@ -102,12 +103,13 @@ namespace async_connection_handler
         if( ec.failed() )
         {
           std::cout << "read error\n";
+          acceptConnection(ioc, acceptor, processRequest);
           return;
         }
 
         std::cout  << "read success: " << bytes << " bytes\n";
 
-        sessionData->response = processRequest(ioc, sessionData->request);
+        processRequest(ioc, sessionData);
 
         boost::beast::http::async_write(sessionData->socket, sessionData->response, [&ioc,&acceptor,&processRequest,sessionData](boost::beast::error_code ec, std::size_t)
         {

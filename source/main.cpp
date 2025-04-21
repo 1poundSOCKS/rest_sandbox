@@ -1,18 +1,13 @@
 #include "pch.h"
 #include "async_connection_handler.h"
 
-boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, 
-  boost::beast::http::request<boost::beast::http::string_body>& req);
-
-boost::beast::http::response<boost::beast::http::dynamic_body> CallServer(boost::asio::io_context& ioc);
-
-boost::beast::http::response<boost::beast::http::string_body> FormatErrorResponse(boost::beast::http::request<boost::beast::http::string_body>& req);
+void requestHandler(boost::asio::io_context& ioc, std::shared_ptr<async_connection_handler::session_data> sessionData);
 
 int main(int argc, char* argv[])
 {
   try
   {
-    async_connection_handler::start(8080, ProcessRequest);
+    async_connection_handler::start(8080, requestHandler);
 
     std::string input;
     std::getline(std::cin, input);
@@ -27,6 +22,15 @@ int main(int argc, char* argv[])
   }
 
   return 0;
+}
+
+boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, boost::beast::http::request<boost::beast::http::string_body>& req);
+boost::beast::http::response<boost::beast::http::dynamic_body> CallServer(boost::asio::io_context& ioc);
+boost::beast::http::response<boost::beast::http::string_body> FormatErrorResponse(boost::beast::http::request<boost::beast::http::string_body>& req);
+
+void requestHandler(boost::asio::io_context& ioc, std::shared_ptr<async_connection_handler::session_data> sessionData)
+{
+  sessionData->response = ProcessRequest(ioc, sessionData->request);
 }
 
 boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, 
