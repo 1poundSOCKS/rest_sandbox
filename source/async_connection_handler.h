@@ -96,6 +96,8 @@ namespace async_connection_handler
 
       std::cout << "Connection accepted\n";
 
+      acceptConnection(ioc, acceptor, processRequest);
+
       std::shared_ptr<session_data> sessionData = std::make_shared<session_data>(socket);
 
       boost::beast::http::async_read(sessionData->socket, sessionData->buffer, sessionData->request, [&ioc,&acceptor,&processRequest,sessionData](boost::beast::error_code ec, std::size_t bytes)
@@ -115,7 +117,6 @@ namespace async_connection_handler
         {
           ec.failed() ? std::cout << "async write failed\n" : std::cout << "async write succeeded\n";
           sessionData->socket.shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
-          acceptConnection(ioc, acceptor, processRequest);
         });
       });
     });

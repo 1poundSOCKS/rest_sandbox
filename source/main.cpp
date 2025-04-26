@@ -93,6 +93,7 @@ boost::beast::http::response<boost::beast::http::string_body> FormatErrorRespons
   boost::beast::http::response<boost::beast::http::string_body> res(boost::beast::http::status::ok, req.version());
   res.set(boost::beast::http::field::server, "Beast");
   res.set(boost::beast::http::field::content_type, "text/json");
+  res.keep_alive(req.keep_alive());
 
   nlohmann::json responseJson = 
   {
