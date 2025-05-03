@@ -14,6 +14,17 @@ inline void show_error(unsigned int handleType, const SQLHANDLE& handle)
   }
 }
 
+inline std::string get_sql_error(unsigned int handleType, const SQLHANDLE& handle)
+{
+  SQLCHAR SQLState[1024];
+  SQLCHAR message[1024];
+
+  constexpr char unknownErrorStr[] = "unknown sql error";
+
+  return SQL_SUCCEEDED(::SQLGetDiagRec(handleType, handle, 1, SQLState, NULL, message, 1024, NULL)) ? 
+    reinterpret_cast<const char*>(message) : unknownErrorStr;
+}
+
 class sql_handle
 {
 
