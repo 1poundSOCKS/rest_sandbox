@@ -6,8 +6,8 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
 boost::beast::http::response<boost::beast::http::dynamic_body> CallServer(boost::asio::io_context& ioc, boost::asio::ip::tcp::endpoint& endpoint);
 boost::beast::http::response<boost::beast::http::string_body> FormatErrorResponse(boost::beast::http::request<boost::beast::http::string_body>& req);
 
-constexpr std::string_view host = "httpbin.org";
-constexpr std::string_view port = "80";
+static constexpr char host[] = "httpbin.org";
+static constexpr char port[] = "80";
 
 int main(int argc, char* argv[])
 {
