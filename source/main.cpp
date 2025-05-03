@@ -1,8 +1,10 @@
 #include "pch.h"
 #include "async_connection_handler.h"
-#include "sql_wrappers.h"
+// #include "sql_wrappers.h"
+#include <mysqlx/xdevapi.h>
 
-boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, boost::beast::http::request<boost::beast::http::string_body>& request, boost::asio::ip::tcp::endpoint& endPoint, sql_statements::insert_job& insertJob);
+
+boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, boost::beast::http::request<boost::beast::http::string_body>& request, boost::asio::ip::tcp::endpoint& endPoint);
 boost::beast::http::response<boost::beast::http::dynamic_body> CallServer(boost::asio::io_context& ioc, boost::asio::ip::tcp::endpoint& endpoint);
 boost::beast::http::response<boost::beast::http::string_body> FormatErrorResponse(boost::beast::http::request<boost::beast::http::string_body>& req);
 
@@ -11,37 +13,56 @@ static constexpr char port[] = "80";
 
 int main(int argc, char* argv[])
 {
+  // try
+  // {
+  //   std::cout << "connect to mysql\n";
+  //   mysqlx::Session sess("127.0.0.1", 3306, "root", "secret");
+  //   std::cout << "connected to mysql\n";
+  //   mysqlx::Schema db = sess.getSchema("mySchema");
+  //   std::cout << "getSchema successful\n";
+  //   mysqlx::Table jobs = db.getTable("jobs");
+  //   std::cout << "getTable successful\n";
+
+  //   std::cout << "insert into jobs\n";
+  //   jobs.insert("id").values(9).execute();
+  //   std::cout << "Data inserted!" << std::endl;
+  // }
+  // catch (const mysqlx::Error &err)
+  // {
+  //   std::cerr << "Error: " << err.what() << std::endl;
+  // }
+
   try
   {
-    SQLRETURN ret;
+    // SQLRETURN ret;
 
-    sql_handle sqlHandle;
-    sqlHandle.setEnvAttr();
+    // sql_handle sqlHandle;
+    // sqlHandle.setEnvAttr();
 
-    SQLCHAR connStr[] = "DSN=MySQL;DATABASE=mySchema;";
+    // SQLCHAR connStr[] = "DSN=MySQL;DATABASE=mySchema;";
 
-    dbc_handle dbcHandle(sqlHandle);
-    dbcHandle.connect(connStr);
+    // dbc_handle dbcHandle(sqlHandle);
+    // dbcHandle.connect(connStr);
 
-    if( !dbcHandle.isConnected() )
-    {
-      std::cout << "Failed to connect to database." << std::endl;
-      show_error(SQL_HANDLE_DBC, dbcHandle);
-      return 0;
-    }
+    // if( !dbcHandle.isConnected() )
+    // {
+    //   std::cout << "Failed to connect to database." << std::endl;
+    //   show_error(SQL_HANDLE_DBC, dbcHandle);
+    //   return 0;
+    // }
 
-    std::cout << "Connected to database." << std::endl;
+    // std::cout << "Connected to database." << std::endl;
 
-    sql_statements::insert_job insertJob(dbcHandle);
+    // sql_statements::insert_job insertJob(dbcHandle);
 
     boost::asio::io_context ioc(1);
     boost::asio::ip::tcp::resolver resolver(ioc);
     auto hostIterator = resolver.resolve(host, port);
     auto endpoint = std::begin(hostIterator)->endpoint();
 
-    async_connection_handler::start(8080, [&endpoint,&insertJob](boost::asio::io_context& ioc, std::shared_ptr<async_connection_handler::session_data> sessionData)
+    async_connection_handler::start(8080, [&endpoint](boost::asio::io_context& ioc, std::shared_ptr<async_connection_handler::session_data> sessionData)
     {
-      sessionData->response = ProcessRequest(ioc, sessionData->request, endpoint, insertJob);
+      sessionData->response = ProcessRequest(ioc, sessionData->request, endpoint);
     });
 
     std::string input;
@@ -60,18 +81,18 @@ int main(int argc, char* argv[])
 }
 
 boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, 
-  boost::beast::http::request<boost::beast::http::string_body>& req, boost::asio::ip::tcp::endpoint& endpoint,
-  sql_statements::insert_job& insertJob)
+  boost::beast::http::request<boost::beast::http::string_body>& req, boost::asio::ip::tcp::endpoint& endpoint)
 {
   try
   {
     nlohmann::json requestJson = nlohmann::json::parse(req.body());
-    int jobId = requestJson["job_id"];
+    // int jobId = requestJson["job_id"];
 
-    insertJob.data.jobId = jobId;
+    // insertJob.data.jobId = jobId;
 
-    std::string responseString = insertJob.execute() ? "Data inserted successfully." : get_sql_error(SQL_HANDLE_STMT, insertJob);
-
+    // std::string responseString = insertJob.execute() ? "Data inserted successfully." : get_sql_error(SQL_HANDLE_STMT, insertJob);
+    std::string responseString = "Hello, world!";
+    
     boost::beast::http::response<boost::beast::http::string_body> res(boost::beast::http::status::ok, req.version());
     res.set(boost::beast::http::field::server, "Beast");
     res.set(boost::beast::http::field::content_type, "text/json");

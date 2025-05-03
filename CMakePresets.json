@@ -10,7 +10,7 @@
         "CMAKE_BUILD_TYPE": "Debug"
       },
       "environment": {
-        "COMPILE-OPTIONS": "/MP /MTd /Zi /W0 /WX /fp:fast /std:c++latest /EHsc",
+        "COMPILE-OPTIONS": "/MTd /Zi /W0 /WX /fp:fast /std:c++latest /EHsc",
         "COMPILE-DEFINITIONS": "",
         "LINK-OPTIONS": "/SUBSYSTEM:CONSOLE",
         "BINARY-RESOURCES": "",
