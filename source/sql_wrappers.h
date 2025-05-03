@@ -121,10 +121,11 @@ class sql_statement
 public:
   sql_statement(SQLHANDLE dbc);
   ~sql_statement();
-  operator SQLHANDLE() const;
+  operator SQLHSTMT() const;
+  bool prepare(SQLCHAR* StatementText, SQLINTEGER TextLength) const;
 
 private:
-  SQLHANDLE m_stmt;
+  SQLHSTMT m_stmt;
 };
 
 inline sql_statement::sql_statement(SQLHANDLE dbc) : m_stmt(nullptr)
@@ -146,7 +147,13 @@ inline sql_statement::~sql_statement()
   }
 }
 
-inline sql_statement::operator SQLHANDLE() const
+inline sql_statement::operator SQLHSTMT() const
 {
   return m_stmt;
+}
+
+inline bool sql_statement::prepare(SQLCHAR* StatementText, SQLINTEGER TextLength) const
+{
+  SQLRETURN ret = ::SQLPrepare(m_stmt, StatementText, TextLength);
+  return SQL_SUCCEEDED(ret);
 }

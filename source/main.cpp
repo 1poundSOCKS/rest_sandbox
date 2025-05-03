@@ -31,9 +31,7 @@ int main(int argc, char* argv[])
 
         sql_statement sqlStatement(dbcHandle);
 
-        ret = SQLPrepare(sqlStatement, query, SQL_NTS);
-
-        if (!SQL_SUCCEEDED(ret))
+        if (!sqlStatement.prepare(query, SQL_NTS))
         {
             show_error(SQL_HANDLE_STMT, sqlStatement);
             return -1;
