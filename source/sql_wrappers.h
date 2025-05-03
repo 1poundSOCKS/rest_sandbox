@@ -1,0 +1,152 @@
+#pragma once
+
+#include <sql.h>
+#include <sqlext.h>
+
+inline void show_error(unsigned int handleType, const SQLHANDLE& handle)
+{
+  SQLCHAR SQLState[1024];
+  SQLCHAR message[1024];
+
+  if (SQLGetDiagRec(handleType, handle, 1, SQLState, NULL, message, 1024, NULL) == SQL_SUCCESS)
+  {
+      std::cout << "ODBC Error: " << message << "\nSQL State: " << SQLState << std::endl;
+  }
+}
+
+class sql_handle
+{
+
+  public:
+    sql_handle();
+    ~sql_handle();
+    operator SQLHANDLE() const;
+    bool setEnvAttr() const;
+
+  private:
+    SQLHANDLE m_env;
+
+};
+
+inline sql_handle::sql_handle() : m_env(nullptr)
+{
+  SQLRETURN ret = ::SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &m_env);
+
+  if( !SQL_SUCCEEDED(ret) )
+  {
+    m_env = nullptr;
+  }
+}
+
+inline sql_handle::~sql_handle()
+{
+  if( m_env )
+  {
+    SQLFreeHandle(SQL_HANDLE_ENV, m_env);
+    m_env = nullptr;
+  }
+}
+
+inline sql_handle::operator SQLHANDLE() const
+{
+  return m_env;
+}
+
+inline bool sql_handle::setEnvAttr() const
+{
+  SQLRETURN ret = ::SQLSetEnvAttr(m_env, SQL_ATTR_ODBC_VERSION, (void*)SQL_OV_ODBC3, 0);
+  return SQL_SUCCEEDED(ret);
+}
+
+class dbc_handle
+{
+  public:
+    dbc_handle(SQLHANDLE env);
+    ~dbc_handle();
+    operator SQLHDBC() const;
+    void connect(SQLCHAR* connStr);
+    bool isConnected() const;
+
+  private:
+    SQLHDBC m_dbc;
+    bool m_connected;
+};
+
+inline dbc_handle::dbc_handle(SQLHANDLE env) : m_dbc(nullptr), m_connected(false)
+{
+  SQLRETURN ret = ::SQLAllocHandle(SQL_HANDLE_DBC, env, &m_dbc);
+
+  if( !SQL_SUCCEEDED(ret) )
+  {
+    m_dbc = nullptr;
+  }
+}
+
+inline dbc_handle::~dbc_handle()
+{
+  if( m_connected )
+  {
+    ::SQLDisconnect(m_dbc);
+    m_connected = false;
+  }
+
+  if( m_dbc )
+  {
+    ::SQLFreeHandle(SQL_HANDLE_DBC, m_dbc);
+    m_dbc = nullptr;
+  }
+}
+
+inline dbc_handle::operator SQLHDBC() const
+{
+  return m_dbc;
+}
+
+inline void dbc_handle::connect(SQLCHAR* connStr)
+{
+  if( !m_connected )
+  {
+    SQLRETURN ret = ::SQLDriverConnect(m_dbc, NULL, connStr, SQL_NTS, NULL, 0, NULL, SQL_DRIVER_COMPLETE);
+    m_connected = SQL_SUCCEEDED(ret);  
+  }
+}
+
+inline bool dbc_handle::isConnected() const
+{
+  return m_connected;
+}
+
+class sql_statement
+{
+public:
+  sql_statement(SQLHANDLE dbc);
+  ~sql_statement();
+  operator SQLHANDLE() const;
+
+private:
+  SQLHANDLE m_stmt;
+};
+
+inline sql_statement::sql_statement(SQLHANDLE dbc) : m_stmt(nullptr)
+{
+  SQLRETURN ret = ::SQLAllocHandle(SQL_HANDLE_STMT, dbc, &m_stmt);
+
+  if( !SQL_SUCCEEDED(ret) )
+  {
+    m_stmt = nullptr;
+  }
+}
+
+inline sql_statement::~sql_statement()
+{
+  if( m_stmt )
+  {
+    ::SQLFreeHandle(SQL_HANDLE_STMT, m_stmt);
+    m_stmt = nullptr;
+  }
+}
+
+inline sql_statement::operator SQLHANDLE() const
+{
+  return m_stmt;
+}

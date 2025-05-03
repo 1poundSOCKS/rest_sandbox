@@ -29,4 +29,7 @@ target_include_directories(rest_sandbox PRIVATE
   $ENV{BOOST_ASIO_INCLUDE}
   $ENV{BOOST_BEAST_INCLUDE}
   $ENV{NLOHMANN_JSON_INCLUDE}
+  $ENV{MYSQL_INCLUDE}
 )
+
+target_link_libraries(rest_sandbox PRIVATE odbc32.lib)

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "async_connection_handler.h"
+#include "sql_wrappers.h"
 
 boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, boost::beast::http::request<boost::beast::http::string_body>& request, boost::asio::ip::tcp::endpoint& endPoint);
 boost::beast::http::response<boost::beast::http::dynamic_body> CallServer(boost::asio::io_context& ioc, boost::asio::ip::tcp::endpoint& endpoint);
@@ -12,6 +13,52 @@ int main(int argc, char* argv[])
 {
   try
   {
+    SQLRETURN ret;
+
+    sql_handle sqlHandle;
+    sqlHandle.setEnvAttr();
+
+    SQLCHAR connStr[] = "DSN=MySQL;DATABASE=mySchema;";
+
+    dbc_handle dbcHandle(sqlHandle);
+    dbcHandle.connect(connStr);
+
+    if( dbcHandle.isConnected() )
+    {
+        std::cout << "Connected to database." << std::endl;
+
+        SQLCHAR* query = (SQLCHAR*)"INSERT INTO jobs (id) VALUES (?)";
+
+        sql_statement sqlStatement(dbcHandle);
+
+        ret = SQLPrepare(sqlStatement, query, SQL_NTS);
+
+        if (!SQL_SUCCEEDED(ret))
+        {
+            show_error(SQL_HANDLE_STMT, sqlStatement);
+            return -1;
+        }
+
+        int jobId = 1;
+        SQLBindParameter(sqlStatement,1,SQL_PARAM_INPUT,SQL_C_LONG,SQL_INTEGER,0,SQL_INTEGER,&jobId,0,NULL);
+
+        ret = SQLExecute(sqlStatement);
+
+        if (SQL_SUCCEEDED(ret))
+        {
+          std::cout << "Data inserted successfully." << std::endl;
+        }
+        else
+        {
+          show_error(SQL_HANDLE_STMT, sqlStatement);
+        }
+    }
+    else
+    {
+        std::cout << "Failed to connect to database." << std::endl;
+        show_error(SQL_HANDLE_DBC, dbcHandle);
+    }
+
     boost::asio::io_context ioc(1);
     boost::asio::ip::tcp::resolver resolver(ioc);
     auto hostIterator = resolver.resolve(host, port);
