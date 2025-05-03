@@ -27,26 +27,16 @@ int main(int argc, char* argv[])
     {
         std::cout << "Connected to database." << std::endl;
 
-        SQLCHAR* query = (SQLCHAR*)"INSERT INTO jobs (id) VALUES (?)";
+        sql_statements::insert_job insertJob(dbcHandle);
+        insertJob.data.jobId = 2;
 
-        sql_statement sqlStatement(dbcHandle);
-
-        if (!sqlStatement.prepare(query, SQL_NTS))
-        {
-            show_error(SQL_HANDLE_STMT, sqlStatement);
-            return -1;
-        }
-
-        int jobId = 1;
-        sqlStatement.bindParameter(1,SQL_PARAM_INPUT,SQL_C_LONG,SQL_INTEGER,0,SQL_INTEGER,&jobId,0,NULL);
-
-        if( sqlStatement.execute() )
+        if( insertJob.execute() )
         {
           std::cout << "Data inserted successfully." << std::endl;
         }
         else
         {
-          show_error(SQL_HANDLE_STMT, sqlStatement);
+          show_error(SQL_HANDLE_STMT, insertJob);
         }
     }
     else

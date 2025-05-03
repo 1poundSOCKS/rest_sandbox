@@ -173,3 +173,48 @@ inline bool sql_statement::bindParameter(SQLUSMALLINT ParameterNumber, SQLSMALLI
   SQLRETURN ret = ::SQLBindParameter(m_stmt,ParameterNumber,InputOutputType,ValueType,ParameterType,ColumnSize,DecimalDigits,ParameterValuePtr,BufferLength,StrLen_or_IndPtr);
   return SQL_SUCCEEDED(ret);
 }
+
+namespace sql_statements
+{
+  class insert_job
+  {
+    public:
+      struct data
+      {
+        data();
+        int jobId;
+      };
+
+      data data;
+
+      insert_job(SQLHANDLE dbc);
+      operator SQLHSTMT() const;
+      bool execute() const;
+
+
+    private:
+      sql_statement m_statement;
+  };
+
+  inline insert_job::data::data() : jobId(-1)
+  {
+  }
+
+  inline insert_job::insert_job(SQLHANDLE dbc) : m_statement(dbc)
+  {
+    SQLCHAR* query = (SQLCHAR*)"INSERT INTO jobs (id) VALUES (?)";
+    m_statement.prepare(query, SQL_NTS);
+    m_statement.bindParameter(1,SQL_PARAM_INPUT,SQL_C_LONG,SQL_INTEGER,0,SQL_INTEGER,&(data.jobId),0,NULL);
+  }
+
+  inline insert_job::operator SQLHSTMT() const
+  {
+    return m_statement;
+  }
+
+  inline bool insert_job::execute() const
+  {
+    return m_statement.execute();
+  }
+
+};
