@@ -38,11 +38,9 @@ int main(int argc, char* argv[])
         }
 
         int jobId = 1;
-        SQLBindParameter(sqlStatement,1,SQL_PARAM_INPUT,SQL_C_LONG,SQL_INTEGER,0,SQL_INTEGER,&jobId,0,NULL);
+        sqlStatement.bindParameter(1,SQL_PARAM_INPUT,SQL_C_LONG,SQL_INTEGER,0,SQL_INTEGER,&jobId,0,NULL);
 
-        ret = SQLExecute(sqlStatement);
-
-        if (SQL_SUCCEEDED(ret))
+        if( sqlStatement.execute() )
         {
           std::cout << "Data inserted successfully." << std::endl;
         }

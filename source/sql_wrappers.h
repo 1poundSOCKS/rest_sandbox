@@ -123,6 +123,9 @@ public:
   ~sql_statement();
   operator SQLHSTMT() const;
   bool prepare(SQLCHAR* StatementText, SQLINTEGER TextLength) const;
+  bool bindParameter(SQLUSMALLINT ParameterNumber, SQLSMALLINT InputOutputType, SQLSMALLINT ValueType, SQLSMALLINT ParameterType, 
+    SQLULEN ColumnSize, SQLSMALLINT DecimalDigits, SQLPOINTER ParameterValuePtr, SQLLEN BufferLength, SQLLEN* StrLen_or_IndPtr) const;
+  bool execute() const;
 
 private:
   SQLHSTMT m_stmt;
@@ -155,5 +158,18 @@ inline sql_statement::operator SQLHSTMT() const
 inline bool sql_statement::prepare(SQLCHAR* StatementText, SQLINTEGER TextLength) const
 {
   SQLRETURN ret = ::SQLPrepare(m_stmt, StatementText, TextLength);
+  return SQL_SUCCEEDED(ret);
+}
+
+inline bool sql_statement::execute() const
+{
+  SQLRETURN ret = ::SQLExecute(m_stmt);
+  return SQL_SUCCEEDED(ret);
+}
+
+inline bool sql_statement::bindParameter(SQLUSMALLINT ParameterNumber, SQLSMALLINT InputOutputType, SQLSMALLINT ValueType, SQLSMALLINT ParameterType, 
+  SQLULEN ColumnSize, SQLSMALLINT DecimalDigits, SQLPOINTER ParameterValuePtr, SQLLEN BufferLength, SQLLEN* StrLen_or_IndPtr) const
+{
+  SQLRETURN ret = ::SQLBindParameter(m_stmt,ParameterNumber,InputOutputType,ValueType,ParameterType,ColumnSize,DecimalDigits,ParameterValuePtr,BufferLength,StrLen_or_IndPtr);
   return SQL_SUCCEEDED(ret);
 }
