@@ -6,6 +6,9 @@ boost::beast::http::response<boost::beast::http::string_body> FormatErrorRespons
 
 std::atomic<bool> running(true);
 
+static constexpr int g_port = 8080;
+std::string g_responseBody = "Hello, world!";
+
 void handle_signal(int signal)
 {
     std::cout << "\nReceived signal " << signal << ", shutting down..." << std::endl;
@@ -21,12 +24,12 @@ int main(int argc, char* argv[])
   {
     std::ifstream ifs("config.json");
     nlohmann::json config = nlohmann::json::parse(ifs);
-    int port = config["port"];
+    g_responseBody  = config["response"];
 
     boost::asio::io_context ioc(1);
     boost::asio::ip::tcp::resolver resolver(ioc);
 
-    async_connection_handler::start(port, [](boost::asio::io_context& ioc, std::shared_ptr<async_connection_handler::session_data> sessionData)
+    async_connection_handler::start(g_port, [](boost::asio::io_context& ioc, std::shared_ptr<async_connection_handler::session_data> sessionData)
     {
       sessionData->response = ProcessRequest(ioc, sessionData->request);
     });
@@ -55,12 +58,8 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
   try
   {
     nlohmann::json requestJson = nlohmann::json::parse(req.body());
-    // int jobId = requestJson["job_id"];
 
-    // insertJob.data.jobId = jobId;
-
-    // std::string responseString = insertJob.execute() ? "Data inserted successfully." : get_sql_error(SQL_HANDLE_STMT, insertJob);
-    std::string responseString = "Hello, world!";
+    std::string responseString = g_responseBody;
     
     boost::beast::http::response<boost::beast::http::string_body> res(boost::beast::http::status::ok, req.version());
     res.set(boost::beast::http::field::server, "Beast");
