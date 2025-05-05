@@ -32,4 +32,4 @@ target_include_directories(rest_sandbox PRIVATE
   $ENV{MYSQL_INCLUDE}
 )
 
-target_link_libraries(rest_sandbox PRIVATE mysqlcppconnx)
+# target_link_libraries(rest_sandbox PRIVATE mysqlcppconnx)

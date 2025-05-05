@@ -10,14 +10,14 @@
         "CMAKE_BUILD_TYPE": "Debug"
       },
       "environment": {
-        "COMPILE-OPTIONS": "/MTd /Zi /W0 /WX /fp:fast /std:c++latest /EHsc",
+        "COMPILE-OPTIONS": "/MTd /Zi /W0 /WX /std:c++17 /EHsc",
         "COMPILE-DEFINITIONS": "",
         "LINK-OPTIONS": "/SUBSYSTEM:CONSOLE",
         "BINARY-RESOURCES": "",
         "BOOST_ASIO_INCLUDE": "C:/Users/mathe/source/repos/vcpkg/packages/boost-asio_x64-windows/include",
         "BOOST_BEAST_INCLUDE": "C:/Users/mathe/source/repos/vcpkg/packages/boost-beast_x64-windows/include",
         "NLOHMANN_JSON_INCLUDE": "C:/Users/mathe/source/repos/vcpkg/packages/nlohmann-json_x64-windows/include",
-        "MYSQL_INCLUDE": "C:/Users/mathe/source/repos/vcpkg/packages/mysql-connector-cpp_x64-windows/include"
+        "MYSQL_INCLUDE": "C:/Program Files/MySQL/MySQL Connector C++ 9.3/include"
       }
     }
   ]

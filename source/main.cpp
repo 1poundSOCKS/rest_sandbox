@@ -13,24 +13,24 @@ static constexpr char port[] = "80";
 
 int main(int argc, char* argv[])
 {
-  // try
-  // {
-  //   std::cout << "connect to mysql\n";
-  //   mysqlx::Session sess("127.0.0.1", 3306, "root", "secret");
-  //   std::cout << "connected to mysql\n";
-  //   mysqlx::Schema db = sess.getSchema("mySchema");
-  //   std::cout << "getSchema successful\n";
-  //   mysqlx::Table jobs = db.getTable("jobs");
-  //   std::cout << "getTable successful\n";
+  try
+  {
+    std::cout << "connect to mysql\n";
+    mysqlx::Session sess("localhost", 3306, "root", "secret");
+    std::cout << "connected to mysql\n";
+    mysqlx::Schema db = sess.getSchema("mySchema");
+    std::cout << "getSchema successful\n";
+    mysqlx::Table jobs = db.getTable("jobs");
+    std::cout << "getTable successful\n";
 
-  //   std::cout << "insert into jobs\n";
-  //   jobs.insert("id").values(9).execute();
-  //   std::cout << "Data inserted!" << std::endl;
-  // }
-  // catch (const mysqlx::Error &err)
-  // {
-  //   std::cerr << "Error: " << err.what() << std::endl;
-  // }
+    std::cout << "insert into jobs\n";
+    jobs.insert("id").values(9).execute();
+    std::cout << "Data inserted!" << std::endl;
+  }
+  catch (const mysqlx::Error &err)
+  {
+    std::cerr << "Error: " << err.what() << std::endl;
+  }
 
   try
   {
