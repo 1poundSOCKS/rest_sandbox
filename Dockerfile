@@ -16,3 +16,7 @@ COPY CMakePresets.json .
 
 RUN cmake . && \
     cmake --build .
+
+EXPOSE 14571
+
+CMD ["bin/rest_sandbox"]

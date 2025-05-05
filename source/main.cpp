@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "async_connection_handler.h"
 // #include "sql_wrappers.h"
-#include <mysqlx/xdevapi.h>
+// #include <mysqlx/xdevapi.h>
 
 
 boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, boost::beast::http::request<boost::beast::http::string_body>& request, boost::asio::ip::tcp::endpoint& endPoint);
@@ -13,24 +13,24 @@ static constexpr char port[] = "80";
 
 int main(int argc, char* argv[])
 {
-  try
-  {
-    std::cout << "connect to mysql\n";
-    mysqlx::Session sess("localhost", 3306, "root", "secret");
-    std::cout << "connected to mysql\n";
-    mysqlx::Schema db = sess.getSchema("mySchema");
-    std::cout << "getSchema successful\n";
-    mysqlx::Table jobs = db.getTable("jobs");
-    std::cout << "getTable successful\n";
+  // try
+  // {
+  //   std::cout << "connect to mysql\n";
+  //   mysqlx::Session sess("localhost", 3306, "root", "secret");
+  //   std::cout << "connected to mysql\n";
+  //   mysqlx::Schema db = sess.getSchema("mySchema");
+  //   std::cout << "getSchema successful\n";
+  //   mysqlx::Table jobs = db.getTable("jobs");
+  //   std::cout << "getTable successful\n";
 
-    std::cout << "insert into jobs\n";
-    jobs.insert("id").values(9).execute();
-    std::cout << "Data inserted!" << std::endl;
-  }
-  catch (const mysqlx::Error &err)
-  {
-    std::cerr << "Error: " << err.what() << std::endl;
-  }
+  //   std::cout << "insert into jobs\n";
+  //   jobs.insert("id").values(9).execute();
+  //   std::cout << "Data inserted!" << std::endl;
+  // }
+  // catch (const mysqlx::Error &err)
+  // {
+  //   std::cerr << "Error: " << err.what() << std::endl;
+  // }
 
   try
   {
@@ -60,13 +60,16 @@ int main(int argc, char* argv[])
     auto hostIterator = resolver.resolve(host, port);
     auto endpoint = std::begin(hostIterator)->endpoint();
 
-    async_connection_handler::start(8080, [&endpoint](boost::asio::io_context& ioc, std::shared_ptr<async_connection_handler::session_data> sessionData)
+    async_connection_handler::start(14571, [&endpoint](boost::asio::io_context& ioc, std::shared_ptr<async_connection_handler::session_data> sessionData)
     {
       sessionData->response = ProcessRequest(ioc, sessionData->request, endpoint);
     });
 
     std::string input;
-    std::getline(std::cin, input);
+    while( input.compare("exit") != 0 )
+    {
+      std::getline(std::cin, input);
+    }
 
     async_connection_handler::stop();
 
