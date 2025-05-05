@@ -25,11 +25,11 @@ namespace async_connection_handler
     boost::beast::http::response<boost::beast::http::string_body> response;
   };
   
-  void acceptConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::acceptor& acceptor, auto&& processRequest);
+  template <typename callback_type> void acceptConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::acceptor& acceptor, callback_type processRequest);
 
   std::shared_ptr<global_data> globalData;
 
-  int start(unsigned short port, auto&& requestHandler)
+  template <typename callback_type> int start(unsigned short port, callback_type requestHandler)
   {
     auto const address =  boost::asio::ip::make_address("0.0.0.0");
 
@@ -83,7 +83,7 @@ namespace async_connection_handler
     globalData.reset();
   }
 
-  void acceptConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::acceptor& acceptor, auto&& processRequest)
+  template <typename callback_type> void acceptConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::acceptor& acceptor, callback_type processRequest)
   {
     acceptor.async_accept(boost::asio::make_strand(ioc), [&ioc,&acceptor,&processRequest](boost::beast::error_code ec, boost::asio::ip::tcp::socket socket)
     {
