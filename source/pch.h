@@ -1,6 +1,7 @@
 #define _WIN32_WINNT 0x0601
 
 #include <iostream>
+#include <fstream>
 #include <thread>
 #include <csignal>
 #include <atomic>

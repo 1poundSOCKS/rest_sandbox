@@ -1,15 +1,8 @@
 #include "pch.h"
 #include "async_connection_handler.h"
-// #include "sql_wrappers.h"
-// #include <mysqlx/xdevapi.h>
 
-
-boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, boost::beast::http::request<boost::beast::http::string_body>& request, boost::asio::ip::tcp::endpoint& endPoint);
-boost::beast::http::response<boost::beast::http::dynamic_body> CallServer(boost::asio::io_context& ioc, boost::asio::ip::tcp::endpoint& endpoint);
+boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, boost::beast::http::request<boost::beast::http::string_body>& request);
 boost::beast::http::response<boost::beast::http::string_body> FormatErrorResponse(boost::beast::http::request<boost::beast::http::string_body>& req);
-
-static constexpr char host[] = "httpbin.org";
-static constexpr char port[] = "80";
 
 std::atomic<bool> running(true);
 
@@ -24,63 +17,19 @@ int main(int argc, char* argv[])
   std::signal(SIGINT, handle_signal);  // Ctrl+C
   std::signal(SIGTERM, handle_signal); // docker stop
 
-  // try
-  // {
-  //   std::cout << "connect to mysql\n";
-  //   mysqlx::Session sess("localhost", 3306, "root", "secret");
-  //   std::cout << "connected to mysql\n";
-  //   mysqlx::Schema db = sess.getSchema("mySchema");
-  //   std::cout << "getSchema successful\n";
-  //   mysqlx::Table jobs = db.getTable("jobs");
-  //   std::cout << "getTable successful\n";
-
-  //   std::cout << "insert into jobs\n";
-  //   jobs.insert("id").values(9).execute();
-  //   std::cout << "Data inserted!" << std::endl;
-  // }
-  // catch (const mysqlx::Error &err)
-  // {
-  //   std::cerr << "Error: " << err.what() << std::endl;
-  // }
-
   try
   {
-    // SQLRETURN ret;
-
-    // sql_handle sqlHandle;
-    // sqlHandle.setEnvAttr();
-
-    // SQLCHAR connStr[] = "DSN=MySQL;DATABASE=mySchema;";
-
-    // dbc_handle dbcHandle(sqlHandle);
-    // dbcHandle.connect(connStr);
-
-    // if( !dbcHandle.isConnected() )
-    // {
-    //   std::cout << "Failed to connect to database." << std::endl;
-    //   show_error(SQL_HANDLE_DBC, dbcHandle);
-    //   return 0;
-    // }
-
-    // std::cout << "Connected to database." << std::endl;
-
-    // sql_statements::insert_job insertJob(dbcHandle);
+    std::ifstream ifs("config.json");
+    nlohmann::json config = nlohmann::json::parse(ifs);
+    int port = config["port"];
 
     boost::asio::io_context ioc(1);
     boost::asio::ip::tcp::resolver resolver(ioc);
-    auto hostIterator = resolver.resolve(host, port);
-    auto endpoint = std::begin(hostIterator)->endpoint();
 
-    async_connection_handler::start(14571, [&endpoint](boost::asio::io_context& ioc, std::shared_ptr<async_connection_handler::session_data> sessionData)
+    async_connection_handler::start(port, [](boost::asio::io_context& ioc, std::shared_ptr<async_connection_handler::session_data> sessionData)
     {
-      sessionData->response = ProcessRequest(ioc, sessionData->request, endpoint);
+      sessionData->response = ProcessRequest(ioc, sessionData->request);
     });
-
-    // std::string input;
-    // while( input.compare("exit") != 0 )
-    // {
-    //   std::getline(std::cin, input);
-    // }
 
     while (running)
     {
@@ -101,7 +50,7 @@ int main(int argc, char* argv[])
 }
 
 boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, 
-  boost::beast::http::request<boost::beast::http::string_body>& req, boost::asio::ip::tcp::endpoint& endpoint)
+  boost::beast::http::request<boost::beast::http::string_body>& req)
 {
   try
   {
@@ -132,26 +81,6 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
     std::cout << "exception\n";
     return FormatErrorResponse(req);
   }
-}
-
-boost::beast::http::response<boost::beast::http::dynamic_body> CallServer(boost::asio::io_context& ioc, boost::asio::ip::tcp::endpoint& endpoint)
-{
-  boost::beast::tcp_stream stream(ioc);
-  stream.connect(endpoint);
-
-  boost::beast::http::request<boost::beast::http::string_body> req{boost::beast::http::verb::get, "/ip", 10};
-  req.set(boost::beast::http::field::host, host);
-  req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-
-  boost::beast::http::write(stream, req);
-
-  boost::beast::flat_buffer buffer;
-  boost::beast::http::response<boost::beast::http::dynamic_body> res;
-  boost::beast::http::read(stream, buffer, res);
-
-  std::cout << res << "\n";
-
-  return res;
 }
 
 boost::beast::http::response<boost::beast::http::string_body> FormatErrorResponse(boost::beast::http::request<boost::beast::http::string_body>& req)
