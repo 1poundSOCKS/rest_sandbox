@@ -11,8 +11,19 @@ boost::beast::http::response<boost::beast::http::string_body> FormatErrorRespons
 static constexpr char host[] = "httpbin.org";
 static constexpr char port[] = "80";
 
+std::atomic<bool> running(true);
+
+void handle_signal(int signal)
+{
+    std::cout << "\nReceived signal " << signal << ", shutting down..." << std::endl;
+    running = false;
+}
+
 int main(int argc, char* argv[])
 {
+  std::signal(SIGINT, handle_signal);  // Ctrl+C
+  std::signal(SIGTERM, handle_signal); // docker stop
+
   // try
   // {
   //   std::cout << "connect to mysql\n";
@@ -65,12 +76,18 @@ int main(int argc, char* argv[])
       sessionData->response = ProcessRequest(ioc, sessionData->request, endpoint);
     });
 
-    std::string input;
-    while( input.compare("exit") != 0 )
-    {
-      std::getline(std::cin, input);
-    }
+    // std::string input;
+    // while( input.compare("exit") != 0 )
+    // {
+    //   std::getline(std::cin, input);
+    // }
 
+    while (running)
+    {
+      std::cout << "Running..." << std::endl;
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+    
     async_connection_handler::stop();
 
     std::cout << "Terminating" << std::endl;
