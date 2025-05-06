@@ -9,14 +9,9 @@ set(BINARY_RESOURCES $ENV{BINARY-RESOURCES})
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(source
-  source/main.cpp
-)
+set(source source/main.cpp)
 
-add_executable(rest_sandbox 
-  ${source}
-  ${BINARY_RESOURCES}
-)
+add_executable(rest_sandbox ${source} ${BINARY_RESOURCES})
 
 add_compile_definitions(rest_sandbox $ENV{COMPILE-DEFINITIONS})
 target_compile_options(rest_sandbox PRIVATE $ENV{COMPILE-OPTIONS})
@@ -29,7 +24,6 @@ target_include_directories(rest_sandbox PRIVATE
   $ENV{BOOST_ASIO_INCLUDE}
   $ENV{BOOST_BEAST_INCLUDE}
   $ENV{NLOHMANN_JSON_INCLUDE}
-  $ENV{MYSQL_INCLUDE}
+  "C:/Users/mathe/source/repos/vcpkg/packages/mongo-cxx-driver_x64-windows/include/mongocxx/v_noabi"
+  "C:/Users/mathe/source/repos/vcpkg/packages/mongo-cxx-driver_x64-windows/include/bsoncxx/v_noabi"
 )
-
-# target_link_libraries(rest_sandbox PRIVATE mysqlcppconnx)

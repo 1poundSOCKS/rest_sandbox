@@ -26,6 +26,12 @@ int main(int argc, char* argv[])
     nlohmann::json config = nlohmann::json::parse(ifs);
     g_responseBody  = config["response"];
 
+    mongocxx::instance instance{};
+    std::cout << "connect to mongo...\n";
+    // auto uri = mongocxx::uri{"mongodb://localhost:27017"};
+    mongocxx::client client{};
+    std::cout << "connected to mongo\n";
+
     boost::asio::io_context ioc(1);
     boost::asio::ip::tcp::resolver resolver(ioc);
 
@@ -47,6 +53,10 @@ int main(int argc, char* argv[])
   catch (const std::exception& e)
   {
     std::cout << "Error: " << e.what() << std::endl;
+  }
+  catch (...)
+  {
+    std::cout << "Unknown exception caught\n";
   }
 
   return 0;
