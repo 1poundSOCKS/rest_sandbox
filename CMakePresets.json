@@ -11,14 +11,12 @@
       },
       "environment": {
         "COMPILE-OPTIONS": "/MTd /Zi /W0 /WX /std:c++17 /EHsc /Od /DEBUG",
-        "COMPILE-DEFINITIONS": "",
         "LINK-OPTIONS": "/SUBSYSTEM:CONSOLE",
         "BINARY-RESOURCES": "",
         "BOOST_ASIO_INCLUDE": "C:/Users/mathe/source/repos/vcpkg/packages/boost-asio_x64-windows/include",
         "BOOST_BEAST_INCLUDE": "C:/Users/mathe/source/repos/vcpkg/packages/boost-beast_x64-windows/include",
         "NLOHMANN_JSON_INCLUDE": "C:/Users/mathe/source/repos/vcpkg/packages/nlohmann-json_x64-windows/include",
-        "MONGO_INCLUDE": "C:/Users/mathe/source/repos/vcpkg/packages/mongo-cxx-driver_x64-windows/include/mongocxx/v_noabi",
-        "BSON_INCLUDE": "C:/Users/mathe/source/repos/vcpkg/packages/mongo-cxx-driver_x64-windows/include/bsoncxx/v_noabi"
+        "PQXX_INCLUDE": "C:/Users/mathe/source/repos/vcpkg/packages/libpqxx_x64-windows/include"
       }
     }
   ]

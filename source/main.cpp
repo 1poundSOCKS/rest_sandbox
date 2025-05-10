@@ -22,15 +22,20 @@ int main(int argc, char* argv[])
 
   try
   {
-    std::ifstream ifs("config.json");
-    nlohmann::json config = nlohmann::json::parse(ifs);
-    g_responseBody  = config["response"];
+    pqxx::connection conn("host=localhost port=5432 dbname=mydb user=myuser password=mypassword");
 
-    mongocxx::instance instance{};
-    std::cout << "connect to mongo...\n";
-    // auto uri = mongocxx::uri{"mongodb://localhost:27017"};
-    mongocxx::client client{};
-    std::cout << "connected to mongo\n";
+    if( conn.is_open() )
+    {
+      std::cout << "open\n";
+
+      pqxx::work txn(conn);
+
+      pqxx::result r = txn.exec("SELECT version();");
+
+      std::cout << "PostgreSQL version: " << r[0][0].as<std::string>() << std::endl;
+
+      txn.commit();  // Commit the transaction
+    }
 
     boost::asio::io_context ioc(1);
     boost::asio::ip::tcp::resolver resolver(ioc);
@@ -67,7 +72,7 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
 {
   try
   {
-    nlohmann::json requestJson = nlohmann::json::parse(req.body());
+    // nlohmann::json requestJson = nlohmann::json::parse(req.body());
 
     std::string responseString = g_responseBody;
     

@@ -1,5 +1,7 @@
 #define _WIN32_WINNT 0x0601
 
+#define _UNICODE
+
 #include <iostream>
 #include <fstream>
 #include <thread>
@@ -11,7 +13,4 @@
 #include <boost/beast.hpp>
 #include <nlohmann/json.hpp>
 
-#include <bsoncxx/builder/stream/document.hpp>
-#include <mongocxx/client.hpp>
-#include <mongocxx/instance.hpp>
-#include <mongocxx/uri.hpp>
+#include <pqxx/pqxx>
