@@ -27,16 +27,23 @@ int main(int argc, char* argv[])
     if( conn.is_open() )
     {
       std::cout << "open\n";
-
       pqxx::work txn(conn);
-
       pqxx::result r = txn.exec("SELECT version();");
-
       std::cout << "PostgreSQL version: " << r[0][0].as<std::string>() << std::endl;
-
-      txn.commit();  // Commit the transaction
+      txn.commit();
     }
+  }
+  catch (const std::exception& e)
+  {
+    std::cout << "Error: " << e.what() << std::endl;
+  }
+  catch (...)
+  {
+    std::cout << "Unknown exception caught\n";
+  }
 
+  try
+  {
     boost::asio::io_context ioc(1);
     boost::asio::ip::tcp::resolver resolver(ioc);
 
@@ -72,7 +79,32 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
 {
   try
   {
-    // nlohmann::json requestJson = nlohmann::json::parse(req.body());
+    nlohmann::json requestJson = nlohmann::json::parse(req.body());
+
+    int id = requestJson["id"];
+    std::string name = requestJson["name"];
+
+    try
+    {
+      pqxx::connection conn("host=localhost port=5432 dbname=mydb user=myuser password=mypassword");
+
+      if( conn.is_open() )
+      {
+        std::cout << "open\n";
+
+        pqxx::work txn(conn);
+        txn.exec_params("INSERT INTO jobs(id,name) VALUES ($1,$2)", id, name);
+        txn.commit();
+      }
+    }
+    catch (const std::exception& e)
+    {
+      std::cout << "Error: " << e.what() << std::endl;
+    }
+    catch (...)
+    {
+      std::cout << "Unknown exception caught\n";
+    }
 
     std::string responseString = g_responseBody;
     
