@@ -32,7 +32,6 @@
 *.app
 
 # project
-/.vscode
 /bin
 /build
 /CMakeFiles
