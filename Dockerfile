@@ -5,7 +5,9 @@ RUN apk update && \
     build-base \
     cmake \
     boost1.80-dev=1.80.0-r3 \
-    nlohmann-json
+    nlohmann-json \
+    postgresql \
+    postgresql-client
 
 WORKDIR /rest_sandbox
 
