@@ -2,7 +2,7 @@
   "version": 6,
   "configurePresets": [
     {
-      "name": "win",
+      "name": "windows",
       "displayName": "Windows",
       "generator": "Visual Studio 17 2022",
       "binaryDir": "bin/Debug",
@@ -17,6 +17,17 @@
         "BOOST_BEAST_INCLUDE": "C:/Users/mathe/source/repos/vcpkg/packages/boost-beast_x64-windows/include",
         "NLOHMANN_JSON_INCLUDE": "C:/Users/mathe/source/repos/vcpkg/packages/nlohmann-json_x64-windows/include",
         "PQXX_INCLUDE": "C:/Users/mathe/source/repos/vcpkg/packages/libpqxx_x64-windows/include"
+      }
+    },
+    {
+      "name": "linux",
+      "displayName": "linux",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "environment": {
+        "PQXX_LIB": "pqxx",
+        "PQ_LIB": "pq"
       }
     }
   ]

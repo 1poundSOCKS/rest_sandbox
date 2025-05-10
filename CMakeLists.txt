@@ -25,3 +25,5 @@ target_include_directories(rest_sandbox PRIVATE
   $ENV{NLOHMANN_JSON_INCLUDE}
   $ENV{PQXX_INCLUDE}
 )
+
+target_link_libraries(rest_sandbox PRIVATE $ENV{PQXX_LIB} $ENV{PQ_LIB})

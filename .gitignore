@@ -44,3 +44,4 @@
 *.cmake
 CMakeCache.txt
 *.sln
+Makefile
