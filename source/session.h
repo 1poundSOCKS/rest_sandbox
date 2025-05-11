@@ -1,11 +1,17 @@
 #pragma once
 
+struct job_data
+{
+  int id;
+  std::string name;
+};
+
 class session
 {
 public:
   session(const char* dbConnection);
   std::string dbVersion() const;
-  void createJob(int id, const char* name);
+  void write(const job_data& jobData);
 
 private:
   std::string m_dbConnection;
@@ -32,14 +38,14 @@ inline std::string session::dbVersion() const
   return dbVersion;
 }
 
-inline void session::createJob(int id, const char *name)
+inline void write(const job_data& jobData)
 {
     pqxx::connection conn(m_dbConnection);
 
     if( conn.is_open() )
     {
       pqxx::work txn(conn);
-      txn.exec_params("INSERT INTO jobs(id,name) VALUES ($1,$2)", id, name);
+      txn.exec_params("INSERT INTO jobs(id,name) VALUES ($1,$2)", jobData.id, jobData.name);
       txn.commit();
     }
 }

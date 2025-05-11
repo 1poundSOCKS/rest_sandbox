@@ -104,12 +104,13 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
   {
     nlohmann::json requestJson = nlohmann::json::parse(req.body());
 
-    int id = requestJson["id"];
-    std::string name = requestJson["name"];
+    job_data jobData;
+    jobData.id = requestJson["id"];
+    jobData.name = requestJson["name"];
 
     try
     {
-      s.createJob(id, name.c_str());
+      s.write(jobData);
     }
     catch (const std::exception& e)
     {
