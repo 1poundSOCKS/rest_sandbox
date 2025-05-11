@@ -6,7 +6,7 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/bin/rest_sandbox",
-      "args": [],
+      "args": ["."],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
       "environment": [],

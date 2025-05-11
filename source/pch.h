@@ -8,9 +8,9 @@
 #include <csignal>
 #include <atomic>
 #include <chrono>
+#include <unistd.h>
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <nlohmann/json.hpp>
-
 #include <pqxx/pqxx>

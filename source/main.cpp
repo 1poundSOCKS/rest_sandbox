@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "async_connection_handler.h"
+#include "session.h"
 
+void run(session& s);
 boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, boost::beast::http::request<boost::beast::http::string_body>& request);
 boost::beast::http::response<boost::beast::http::string_body> FormatErrorResponse(boost::beast::http::request<boost::beast::http::string_body>& req);
 
@@ -17,21 +19,38 @@ void handle_signal(int signal)
 
 int main(int argc, char* argv[])
 {
+  if( argc != 2 )
+  {
+    std::cout << "usage: rest_sandbox <directory>\n";
+    exit(0);
+  }
+
+  if( ::chdir(argv[1]) != 0)
+  {
+    std::cout << "failed to set working directory to: " << argv[1] << "\n";
+    exit(0);
+  }
+  else
+  {
+    std::cout << "working directory changed to: " << argv[1] << "\n";
+  }
+
   std::signal(SIGINT, handle_signal);  // Ctrl+C
   std::signal(SIGTERM, handle_signal); // docker stop
 
   try
   {
-    pqxx::connection conn("host=localhost port=5432 dbname=mydb user=myuser password=mypassword");
+    std::ifstream inputFile("config.json");
+    nlohmann::json config;
+    inputFile >> config;
+    std::string dbConnection = config["db_connection"];
+    std::cout << "db connection: " << dbConnection << "\n";
 
-    if( conn.is_open() )
-    {
-      std::cout << "open\n";
-      pqxx::work txn(conn);
-      pqxx::result r = txn.exec("SELECT version();");
-      std::cout << "PostgreSQL version: " << r[0][0].as<std::string>() << std::endl;
-      txn.commit();
-    }
+    session s(dbConnection.c_str());
+
+    std::cout << "database version: " << s.dbVersion() << "\n";
+
+    run(s);
   }
   catch (const std::exception& e)
   {
@@ -42,12 +61,18 @@ int main(int argc, char* argv[])
     std::cout << "Unknown exception caught\n";
   }
 
+  return 0;
+}
+
+void run(session& s)
+{
+
   try
   {
     boost::asio::io_context ioc(1);
     boost::asio::ip::tcp::resolver resolver(ioc);
 
-    async_connection_handler::start(g_port, [](boost::asio::io_context& ioc, std::shared_ptr<async_connection_handler::session_data> sessionData)
+    async_connection_handler::start(g_port, [&s](boost::asio::io_context& ioc, std::shared_ptr<async_connection_handler::session_data> sessionData)
     {
       sessionData->response = ProcessRequest(ioc, sessionData->request);
     });
@@ -70,8 +95,6 @@ int main(int argc, char* argv[])
   {
     std::cout << "Unknown exception caught\n";
   }
-
-  return 0;
 }
 
 boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, 
@@ -86,7 +109,7 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
 
     try
     {
-      pqxx::connection conn("host=localhost port=5432 dbname=mydb user=myuser password=mypassword");
+      pqxx::connection conn("host=host.docker.internal port=5432 dbname=mydb user=myuser password=mypassword");
 
       if( conn.is_open() )
       {
