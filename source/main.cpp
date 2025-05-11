@@ -2,8 +2,8 @@
 #include "async_connection_handler.h"
 #include "session.h"
 
-void run(session& s);
-boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, session& s, boost::beast::http::request<boost::beast::http::string_body>& request);
+void run(std::shared_ptr<session> s);
+boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, std::shared_ptr<session> s, boost::beast::http::request<boost::beast::http::string_body>& request);
 boost::beast::http::response<boost::beast::http::string_body> FormatErrorResponse(boost::beast::http::request<boost::beast::http::string_body>& req);
 
 std::atomic<bool> running(true);
@@ -38,6 +38,8 @@ int main(int argc, char* argv[])
   std::signal(SIGINT, handle_signal);  // Ctrl+C
   std::signal(SIGTERM, handle_signal); // docker stop
 
+  std::shared_ptr<session> s;
+
   try
   {
     std::ifstream inputFile("config.json");
@@ -46,9 +48,9 @@ int main(int argc, char* argv[])
     std::string dbConnection = config["db_connection"];
     std::cout << "db connection: " << dbConnection << "\n";
 
-    session s(dbConnection.c_str());
+    s = std::make_shared<session>(dbConnection.c_str());
 
-    std::cout << "database version: " << s.dbVersion() << "\n";
+    std::cout << "database version: " << s->dbVersion() << "\n";
 
     run(s);
   }
@@ -64,15 +66,14 @@ int main(int argc, char* argv[])
   return 0;
 }
 
-void run(session& s)
+void run(std::shared_ptr<session> s)
 {
-
   try
   {
     boost::asio::io_context ioc(1);
     boost::asio::ip::tcp::resolver resolver(ioc);
 
-    async_connection_handler::start(g_port, [&s](boost::asio::io_context& ioc, std::shared_ptr<async_connection_handler::session_data> sessionData)
+    async_connection_handler::start(g_port, [s](boost::asio::io_context& ioc, std::shared_ptr<async_connection_handler::session_data> sessionData)
     {
       sessionData->response = ProcessRequest(ioc, s, sessionData->request);
     });
@@ -98,19 +99,23 @@ void run(session& s)
 }
 
 boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, 
-  session& s, boost::beast::http::request<boost::beast::http::string_body>& req)
+  std::shared_ptr<session> s, boost::beast::http::request<boost::beast::http::string_body>& req)
 {
   try
   {
     nlohmann::json requestJson = nlohmann::json::parse(req.body());
 
+    std::string command = requestJson["command"];
+
     job_data jobData;
     jobData.id = requestJson["id"];
     jobData.name = requestJson["name"];
 
+    std::variant<job_data> commandData(jobData);
+
     try
     {
-      s.write(jobData);
+      s->run(commandData);
     }
     catch (const std::exception& e)
     {
