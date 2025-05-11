@@ -3,7 +3,7 @@
 #include "session.h"
 
 void run(session& s);
-boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, boost::beast::http::request<boost::beast::http::string_body>& request);
+boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, session& s, boost::beast::http::request<boost::beast::http::string_body>& request);
 boost::beast::http::response<boost::beast::http::string_body> FormatErrorResponse(boost::beast::http::request<boost::beast::http::string_body>& req);
 
 std::atomic<bool> running(true);
@@ -74,7 +74,7 @@ void run(session& s)
 
     async_connection_handler::start(g_port, [&s](boost::asio::io_context& ioc, std::shared_ptr<async_connection_handler::session_data> sessionData)
     {
-      sessionData->response = ProcessRequest(ioc, sessionData->request);
+      sessionData->response = ProcessRequest(ioc, s, sessionData->request);
     });
 
     while (running)
@@ -98,7 +98,7 @@ void run(session& s)
 }
 
 boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, 
-  boost::beast::http::request<boost::beast::http::string_body>& req)
+  session& s, boost::beast::http::request<boost::beast::http::string_body>& req)
 {
   try
   {
@@ -109,16 +109,7 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
 
     try
     {
-      pqxx::connection conn("host=host.docker.internal port=5432 dbname=mydb user=myuser password=mypassword");
-
-      if( conn.is_open() )
-      {
-        std::cout << "open\n";
-
-        pqxx::work txn(conn);
-        txn.exec_params("INSERT INTO jobs(id,name) VALUES ($1,$2)", id, name);
-        txn.commit();
-      }
+      s.createJob(id, name.c_str());
     }
     catch (const std::exception& e)
     {
