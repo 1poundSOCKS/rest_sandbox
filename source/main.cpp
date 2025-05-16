@@ -50,6 +50,7 @@ int main(int argc, char* argv[])
     std::cout << "db connection: " << dbConnection << "\n";
 
     s = std::make_shared<session>(dbConnection.c_str());
+    s->initialize();
 
     std::cout << "database version: " << s->dbVersion() << "\n";
 
@@ -170,7 +171,6 @@ command_data getCommandDataFromRequestJson(const nlohmann::json& requestJson)
     if( command == "book_job" )
     {
       book_job_data bookJobData;
-      bookJobData.id = requestJson["id"];
       bookJobData.name = requestJson["name"];
       return command_data(bookJobData);
     }
