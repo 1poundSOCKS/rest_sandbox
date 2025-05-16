@@ -1,5 +1,7 @@
 #pragma once
 
+#include "database.h"
+
 struct unknown_data
 {
 };
@@ -39,38 +41,35 @@ inline void session::initialize()
 
 inline std::string session::dbVersion() const
 {
-  std::string dbVersion = "***unknown***";
+  std::string version = "";
 
-  pqxx::connection conn(m_dbConnection);
-
+  database::connection conn(m_dbConnection);
+  
   if( conn.is_open() )
   {
-    pqxx::work txn(conn);
-    pqxx::result r = txn.exec("SELECT version();");
-    dbVersion = r[0][0].as<std::string>();
+    database::transaction txn(conn);
+    version = database::dbVersion(txn);
     txn.commit();
   }
 
-  return dbVersion;
+  return version;
 }
 
 inline int session::getMaxJobId() const
 {
   int maxId = -1;
 
-  pqxx::connection conn(m_dbConnection);
+  database::connection conn(m_dbConnection);
   
   if( conn.is_open() )
   {
-    pqxx::work txn(conn);
-    pqxx::result r = txn.exec_params("SELECT MAX(id) as id FROM jobs");
-    if( !r.empty() )
+    database::transaction txn(conn);
+
+    database::result r = txn.exec_params("SELECT MAX(id) as id FROM jobs");
+    for( auto row : r )
     {
-      for( auto row : r )
-      {
-        auto id = row["id"];
-        maxId = id.is_null() ? -1 : id.as<int>();
-      }
+      auto id = row["id"];
+      maxId = id.is_null() ? -1 : id.as<int>();
     }
     txn.commit();
   }
@@ -88,15 +87,16 @@ inline void session::run(const command_data& commandData)
 
 inline void session::run(const book_job_data& commandData)
 {
-  pqxx::connection conn(m_dbConnection);
+  database::connection conn(m_dbConnection);
 
   if( conn.is_open() )
   {
     boost::uuids::uuid uuid = boost::uuids::random_generator()();
-    std::string uuid_str = boost::lexical_cast<std::string>(uuid);
+    std::string uuidStr = boost::lexical_cast<std::string>(uuid);
+    database::jobs_record record { uuidStr, ++m_maxJobId, commandData.name };
     
-    pqxx::work txn(conn);
-    txn.exec_params("INSERT INTO jobs(transaction_id, id, name) VALUES ($1, $2, $3)", uuid_str, ++m_maxJobId, commandData.name);
+    database::transaction txn(conn);
+    database::insert(txn, record);
     txn.commit();
   }
 }
