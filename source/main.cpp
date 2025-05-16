@@ -5,7 +5,7 @@
 void run(std::shared_ptr<session> s);
 boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, boost::beast::http::request<boost::beast::http::string_body>& request, std::shared_ptr<session> s);
 boost::beast::http::response<boost::beast::http::string_body> FormatErrorResponse(boost::beast::http::request<boost::beast::http::string_body>& req);
-command_data getCommandDataFromRequestJson(const nlohmann::json& requestJson);
+std::optional<command_data> getCommandDataFromRequestJson(const nlohmann::json& requestJson);
 
 std::atomic<bool> running(true);
 
@@ -109,11 +109,14 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
 
     std::string command = requestJson["command"];
 
-    command_data commandData = getCommandDataFromRequestJson(requestJson);
+    auto commandData = getCommandDataFromRequestJson(requestJson);
 
     try
     {
-      s->run(commandData);
+      if( commandData.has_value() )
+      {
+        s->run(commandData.value());
+      }
     }
     catch (const std::exception& e)
     {
@@ -164,7 +167,7 @@ boost::beast::http::response<boost::beast::http::string_body> FormatErrorRespons
   return res;
 }
 
-command_data getCommandDataFromRequestJson(const nlohmann::json& requestJson)
+std::optional<command_data> getCommandDataFromRequestJson(const nlohmann::json& requestJson)
 {
     std::string command = requestJson["command"];
 
@@ -176,6 +179,6 @@ command_data getCommandDataFromRequestJson(const nlohmann::json& requestJson)
     }
     else
     {
-      return command_data(unknown_data());
+      return std::nullopt;
     }
 }

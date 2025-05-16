@@ -2,16 +2,12 @@
 
 #include "database.h"
 
-struct unknown_data
-{
-};
-
 struct book_job_data
 {
   std::string name;
 };
 
-using command_data = std::variant<unknown_data, book_job_data>;
+using command_data = std::variant<book_job_data>;
 
 class session
 {
