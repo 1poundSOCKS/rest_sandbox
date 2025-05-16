@@ -25,11 +25,11 @@ namespace async_connection_handler
     boost::beast::http::response<boost::beast::http::string_body> response;
   };
   
-  template <typename callback_type> void acceptConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::acceptor& acceptor, callback_type processRequest);
+  template <typename custom_data_type, typename callback_type> void acceptConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::acceptor& acceptor, custom_data_type customData, callback_type processRequest);
 
   std::shared_ptr<global_data> globalData;
 
-  template <typename callback_type> int start(unsigned short port, callback_type requestHandler)
+  template <typename custom_data_type, typename callback_type> int start(unsigned short port, custom_data_type customData, callback_type requestHandler)
   {
     auto const address =  boost::asio::ip::make_address("0.0.0.0");
 
@@ -67,9 +67,9 @@ namespace async_connection_handler
         return 0;
     }
 
-    globalData->worker = std::make_unique<std::thread>([&requestHandler]()
+    globalData->worker = std::make_unique<std::thread>([customData,requestHandler]()
     {
-      acceptConnection(globalData->ioc, globalData->acceptor, requestHandler);
+      acceptConnection<custom_data_type, callback_type>(globalData->ioc, globalData->acceptor, customData, requestHandler);
       globalData->ioc.run();
     });
 
@@ -83,37 +83,37 @@ namespace async_connection_handler
     globalData.reset();
   }
 
-  template <typename callback_type> void acceptConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::acceptor& acceptor, callback_type processRequest)
+  template <typename custom_data_type, typename callback_type> void acceptConnection(boost::asio::io_context& ioc, boost::asio::ip::tcp::acceptor& acceptor, custom_data_type customData, callback_type processRequest)
   {
-    acceptor.async_accept(boost::asio::make_strand(ioc), [&ioc,&acceptor,&processRequest](boost::beast::error_code ec, boost::asio::ip::tcp::socket socket)
+    acceptor.async_accept(boost::asio::make_strand(ioc), [&ioc,&acceptor,customData,processRequest](boost::beast::error_code ec, boost::asio::ip::tcp::socket socket)
     {
       if( ec.failed() )
       {
         std::cout << "accept failed\n";
-        acceptConnection(ioc, acceptor, processRequest);
+        acceptConnection<custom_data_type, callback_type>(ioc, acceptor, customData, processRequest);
         return;
       }
 
       std::cout << "Connection accepted\n";
 
-      acceptConnection(ioc, acceptor, processRequest);
+      acceptConnection<custom_data_type, callback_type>(ioc, acceptor, customData, processRequest);
 
       std::shared_ptr<session_data> sessionData = std::make_shared<session_data>(socket);
 
-      boost::beast::http::async_read(sessionData->socket, sessionData->buffer, sessionData->request, [&ioc,&acceptor,&processRequest,sessionData](boost::beast::error_code ec, std::size_t bytes)
+      boost::beast::http::async_read(sessionData->socket, sessionData->buffer, sessionData->request, [&ioc,&acceptor,processRequest,sessionData,customData](boost::beast::error_code ec, std::size_t bytes)
       {
         if( ec.failed() )
         {
           std::cout << "read error\n";
-          acceptConnection(ioc, acceptor, processRequest);
+          acceptConnection<custom_data_type, callback_type>(ioc, acceptor, customData, processRequest);
           return;
         }
 
         std::cout  << "read success: " << bytes << " bytes\n";
 
-        processRequest(ioc, sessionData);
+        processRequest(ioc, sessionData, customData);
 
-        boost::beast::http::async_write(sessionData->socket, sessionData->response, [&ioc,&acceptor,&processRequest,sessionData](boost::beast::error_code ec, std::size_t)
+        boost::beast::http::async_write(sessionData->socket, sessionData->response, [&ioc,sessionData](boost::beast::error_code ec, std::size_t)
         {
           ec.failed() ? std::cout << "async write failed\n" : std::cout << "async write succeeded\n";
           sessionData->socket.shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);

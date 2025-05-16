@@ -3,7 +3,7 @@
 #include "session.h"
 
 void run(std::shared_ptr<session> s);
-boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, std::shared_ptr<session> s, boost::beast::http::request<boost::beast::http::string_body>& request);
+boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, boost::beast::http::request<boost::beast::http::string_body>& request, std::shared_ptr<session> s);
 boost::beast::http::response<boost::beast::http::string_body> FormatErrorResponse(boost::beast::http::request<boost::beast::http::string_body>& req);
 
 std::atomic<bool> running(true);
@@ -73,9 +73,9 @@ void run(std::shared_ptr<session> s)
     boost::asio::io_context ioc(1);
     boost::asio::ip::tcp::resolver resolver(ioc);
 
-    async_connection_handler::start(g_port, [s](boost::asio::io_context& ioc, std::shared_ptr<async_connection_handler::session_data> sessionData)
+    async_connection_handler::start<std::shared_ptr<session>>(g_port, s, [](boost::asio::io_context& ioc, std::shared_ptr<async_connection_handler::session_data> sessionData, std::shared_ptr<session> s)
     {
-      sessionData->response = ProcessRequest(ioc, s, sessionData->request);
+      sessionData->response = ProcessRequest(ioc, sessionData->request, s);
     });
 
     while (running)
@@ -99,7 +99,7 @@ void run(std::shared_ptr<session> s)
 }
 
 boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, 
-  std::shared_ptr<session> s, boost::beast::http::request<boost::beast::http::string_body>& req)
+  boost::beast::http::request<boost::beast::http::string_body>& req, std::shared_ptr<session> s)
 {
   try
   {
