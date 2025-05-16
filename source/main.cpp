@@ -50,7 +50,6 @@ int main(int argc, char* argv[])
     std::cout << "db connection: " << dbConnection << "\n";
 
     s = std::make_shared<session>(dbConnection.c_str());
-    s->initialize();
 
     std::cout << "database version: " << s->dbVersion() << "\n";
 

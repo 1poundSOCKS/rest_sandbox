@@ -14,61 +14,46 @@ class session
 public:
   session(const char* dbConnection);
   void initialize();
-  std::string dbVersion() const;
+  std::string dbVersion();
   void run(const command_data& commandData);
 
 private:
 
   void run(const book_job_data& commandData);
-  int getMaxJobId() const;
+  int getMaxJobId();
 
   std::string m_dbConnection;
+  database m_db;
   int m_maxJobId;
 };
 
-inline session::session(const char* dbConnection) : m_dbConnection(dbConnection), m_maxJobId(-1)
+inline session::session(const char* dbConnection) : m_dbConnection(dbConnection), m_maxJobId(-1), m_db(dbConnection)
 {
 }
 
 inline void session::initialize()
 {
+  m_db.initialize();
   m_maxJobId = getMaxJobId();
 }
 
-inline std::string session::dbVersion() const
+inline std::string session::dbVersion()
 {
   std::string version = "";
 
-  database::connection conn(m_dbConnection);
-  
-  if( conn.is_open() )
-  {
-    database::transaction txn(conn);
-    version = database::dbVersion(txn);
-    txn.commit();
-  }
+  database::transaction txn = m_db.getTransaction();
+  version = m_db.dbVersion(txn);
+  txn.commit();
 
   return version;
 }
 
-inline int session::getMaxJobId() const
+inline int session::getMaxJobId()
 {
   int maxId = -1;
-
-  database::connection conn(m_dbConnection);
-  
-  if( conn.is_open() )
-  {
-    database::transaction txn(conn);
-
-    database::result r = txn.exec_params("SELECT MAX(id) as id FROM jobs");
-    for( auto row : r )
-    {
-      auto id = row["id"];
-      maxId = id.is_null() ? -1 : id.as<int>();
-    }
-    txn.commit();
-  }
+  database::transaction txn = m_db.getTransaction();
+  maxId = m_db.getMaxJobId(txn);
+  txn.commit();
 
   return maxId;
 }
@@ -83,16 +68,11 @@ inline void session::run(const command_data& commandData)
 
 inline void session::run(const book_job_data& commandData)
 {
-  database::connection conn(m_dbConnection);
-
-  if( conn.is_open() )
-  {
-    boost::uuids::uuid uuid = boost::uuids::random_generator()();
-    std::string uuidStr = boost::lexical_cast<std::string>(uuid);
-    database::jobs_record record { uuidStr, ++m_maxJobId, commandData.name };
-    
-    database::transaction txn(conn);
-    database::insert(txn, record);
-    txn.commit();
-  }
+  boost::uuids::uuid uuid = boost::uuids::random_generator()();
+  std::string uuidStr = boost::lexical_cast<std::string>(uuid);
+  database::jobs_record record { uuidStr, ++m_maxJobId, commandData.name };
+  
+  database::transaction txn = m_db.getTransaction();
+  m_db.insert(txn, record);
+  txn.commit();
 }
