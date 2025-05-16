@@ -45,7 +45,7 @@ inline void session::run(const std::variant<job_data>& commandData)
 {
   pqxx::connection conn(m_dbConnection);
 
-  std::visit([this](const job_data& commandData)
+  std::visit([this](auto&& commandData)
   {
     run(commandData);
   }, commandData);
