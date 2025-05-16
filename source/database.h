@@ -8,22 +8,13 @@ public:
   using transaction = pqxx::work;
   using result = pqxx::result;
 
-  struct jobs_record
-  {
-    std::string transactionId;
-    int id;
-    std::string name;
-  };
-
   inline database(const char* connString);
+  inline void prepareSQL(const char* name, const char* sql);
   inline transaction startTransaction();
   inline std::string dbVersion(transaction& txn);
-  inline int getMaxJobId(transaction& txn);
-  inline void insert(transaction& txn, const jobs_record& record);
+  inline int getMaxJobId(transaction& txn, const char* statement);
 
 private:
-
-  inline void initialize();
 
   connection m_conn;
 
@@ -31,7 +22,11 @@ private:
 
 inline database::database(const char* connString) : m_conn(connString)
 {
-  initialize();
+}
+
+inline void database::prepareSQL(const char* name, const char* sql)
+{
+  m_conn.prepare(name, sql);
 }
 
 inline database::transaction database::startTransaction()
@@ -45,25 +40,14 @@ inline std::string database::dbVersion(transaction& txn)
   return r[0][0].as<std::string>();
 }
 
-inline int database::getMaxJobId(transaction& txn)
+inline int database::getMaxJobId(transaction& txn, const char* statement)
 {
   int maxId = -1;
-  database::result r = txn.exec_prepared("GET_MAX_JOB_ID");
+  database::result r = txn.exec_prepared(statement);
   for( auto row : r )
   {
     auto id = row["id"];
     maxId = id.is_null() ? -1 : id.as<int>();
   }
   return maxId;
-}
-
-inline void database::insert(transaction& txn, const jobs_record& record)
-{
-    txn.exec_prepared("INSERT_JOB", record.transactionId, record.id, record.name);
-}
-
-inline void database::initialize()
-{
-  m_conn.prepare("GET_MAX_JOB_ID", "SELECT MAX(id) as id FROM jobs");
-  m_conn.prepare("INSERT_JOB", "INSERT INTO jobs(transaction_id, id, name) VALUES ($1, $2, $3)");
 }
