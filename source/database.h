@@ -1,23 +1,12 @@
 #pragma once
 
-struct database
+class database
 {
-  database(const char* connString) : conn(connString)
-  {
-    initialize();
-  }
+public:
 
   using connection = pqxx::connection;
   using transaction = pqxx::work;
   using result = pqxx::result;
-
-  connection conn;
-
-  inline std::string dbVersion(transaction& txn)
-  {
-    result r = txn.exec("SELECT version();");
-    return r[0][0].as<std::string>();
-  }
 
   struct jobs_record
   {
@@ -26,15 +15,20 @@ struct database
     std::string name;
   };
 
-  inline transaction startTransaction()
+  database(const char* connString) : m_conn(connString)
   {
-    return transaction(conn);
+    initialize();
   }
 
-  inline void initialize()
+  inline std::string dbVersion(transaction& txn)
   {
-    conn.prepare("GET_MAX_JOB_ID", "SELECT MAX(id) as id FROM jobs");
-    conn.prepare("INSERT_JOB", "INSERT INTO jobs(transaction_id, id, name) VALUES ($1, $2, $3)");
+    result r = txn.exec("SELECT version();");
+    return r[0][0].as<std::string>();
+  }
+
+  inline transaction startTransaction()
+  {
+    return transaction(m_conn);
   }
 
   inline int getMaxJobId(transaction& txn)
@@ -53,4 +47,15 @@ struct database
   {
       txn.exec_prepared("INSERT_JOB", record.transactionId, record.id, record.name);
   }
+
+private:
+
+  inline void initialize()
+  {
+    m_conn.prepare("GET_MAX_JOB_ID", "SELECT MAX(id) as id FROM jobs");
+    m_conn.prepare("INSERT_JOB", "INSERT INTO jobs(transaction_id, id, name) VALUES ($1, $2, $3)");
+  }
+
+  connection m_conn;
+
 };
