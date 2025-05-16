@@ -1,21 +1,27 @@
 #pragma once
 
-struct job_data
+struct unknown_data
+{
+};
+
+struct book_job_data
 {
   int id;
   std::string name;
 };
+
+using command_data = std::variant<unknown_data, book_job_data>;
 
 class session
 {
 public:
   session(const char* dbConnection);
   std::string dbVersion() const;
-  void run(const std::variant<job_data>& commandData);
+  void run(const command_data& commandData);
 
 private:
 
-  void run(const job_data& commandData);
+  void run(const book_job_data& commandData);
 
   std::string m_dbConnection;
 };
@@ -41,7 +47,7 @@ inline std::string session::dbVersion() const
   return dbVersion;
 }
 
-inline void session::run(const std::variant<job_data>& commandData)
+inline void session::run(const command_data& commandData)
 {
   pqxx::connection conn(m_dbConnection);
 
@@ -51,7 +57,7 @@ inline void session::run(const std::variant<job_data>& commandData)
   }, commandData);
 }
 
-inline void session::run(const job_data& commandData)
+inline void session::run(const book_job_data& commandData)
 {
   pqxx::connection conn(m_dbConnection);
 

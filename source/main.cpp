@@ -5,6 +5,7 @@
 void run(std::shared_ptr<session> s);
 boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, boost::beast::http::request<boost::beast::http::string_body>& request, std::shared_ptr<session> s);
 boost::beast::http::response<boost::beast::http::string_body> FormatErrorResponse(boost::beast::http::request<boost::beast::http::string_body>& req);
+command_data getCommandDataFromRequestJson(const nlohmann::json& requestJson);
 
 std::atomic<bool> running(true);
 
@@ -107,11 +108,7 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
 
     std::string command = requestJson["command"];
 
-    job_data jobData;
-    jobData.id = requestJson["id"];
-    jobData.name = requestJson["name"];
-
-    std::variant<job_data> commandData(jobData);
+    command_data commandData = getCommandDataFromRequestJson(requestJson);
 
     try
     {
@@ -164,4 +161,21 @@ boost::beast::http::response<boost::beast::http::string_body> FormatErrorRespons
   res.body() = to_string(responseJson);
   res.prepare_payload();
   return res;
+}
+
+command_data getCommandDataFromRequestJson(const nlohmann::json& requestJson)
+{
+    std::string command = requestJson["command"];
+
+    if( command == "book_job" )
+    {
+      book_job_data bookJobData;
+      bookJobData.id = requestJson["id"];
+      bookJobData.name = requestJson["name"];
+      return command_data(bookJobData);
+    }
+    else
+    {
+      return command_data(unknown_data());
+    }
 }
