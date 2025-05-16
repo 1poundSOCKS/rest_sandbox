@@ -29,11 +29,6 @@ private:
 
 inline session::session(const char* dbConnection) : m_dbConnection(dbConnection), m_maxJobId(-1), m_db(dbConnection)
 {
-}
-
-inline void session::initialize()
-{
-  m_db.initialize();
   m_maxJobId = getMaxJobId();
 }
 
