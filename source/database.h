@@ -26,7 +26,7 @@ struct database
     std::string name;
   };
 
-  inline transaction getTransaction()
+  inline transaction startTransaction()
   {
     return transaction(conn);
   }

@@ -41,7 +41,7 @@ inline std::string session::dbVersion()
 {
   std::string version = "";
 
-  database::transaction txn = m_db.getTransaction();
+  database::transaction txn = m_db.startTransaction();
   version = m_db.dbVersion(txn);
   txn.commit();
 
@@ -51,10 +51,9 @@ inline std::string session::dbVersion()
 inline int session::getMaxJobId()
 {
   int maxId = -1;
-  database::transaction txn = m_db.getTransaction();
+  database::transaction txn = m_db.startTransaction();
   maxId = m_db.getMaxJobId(txn);
   txn.commit();
-
   return maxId;
 }
 
@@ -72,7 +71,7 @@ inline void session::run(const book_job_data& commandData)
   std::string uuidStr = boost::lexical_cast<std::string>(uuid);
   database::jobs_record record { uuidStr, ++m_maxJobId, commandData.name };
   
-  database::transaction txn = m_db.getTransaction();
+  database::transaction txn = m_db.startTransaction();
   m_db.insert(txn, record);
   txn.commit();
 }
