@@ -10,6 +10,9 @@ std::string toString(std::time_t timestamp)
   return oss.str();
 }
 
+// GetMaxJobId
+//
+
 static constexpr char* preparedGetMaxJobId = "GET_MAX_JOB_ID";
 
 inline void prepareGetMaxJobId(database& db)
@@ -28,6 +31,9 @@ inline int getMaxJobId(database::transaction& txn)
   }
   return maxId;
 }
+
+// InsertJob
+//
 
 struct jobs_record
 {
@@ -48,6 +54,9 @@ inline void insert(database::transaction& txn, const jobs_record& record)
 {
     txn.exec_prepared(preparedInsertJob, toString(record.transactionTimestamp), record.transactionId, record.jobId, record.jobName);
 }
+
+// GetJob
+//
 
 static constexpr char* preparedGetJob = "GET_JOB";
 
@@ -76,6 +85,9 @@ inline std::optional<get_job_data> getJob(database::transaction& txn, int64_t jo
     return std::nullopt;
   }
 }
+
+// prepare all SQL
+//
 
 inline void prepareSQL(database& db)
 {
