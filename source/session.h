@@ -1,6 +1,6 @@
 #pragma once
 
-#include "tables.h"
+#include "prepared_sql.h"
 
 struct book_job_data
 {
@@ -19,11 +19,7 @@ public:
 
 private:
 
-  static constexpr char* m_getMaxJobId = "GET_MAX_JOB_ID";
-  static constexpr char* m_insertJob = "INSERT_JOB";
-
   void run(const book_job_data& commandData);
-  int getMaxJobId();
 
   std::string m_dbConnection;
   database m_db;
@@ -32,9 +28,11 @@ private:
 
 inline session::session(const char* dbConnection) : m_dbConnection(dbConnection), m_maxJobId(-1), m_db(dbConnection)
 {
-  m_db.prepareSQL(m_getMaxJobId, "SELECT MAX(id) as id FROM jobs");
-  m_db.prepareSQL(m_insertJob, "INSERT INTO jobs(transaction_id, id, name) VALUES ($1, $2, $3)");
-  m_maxJobId = getMaxJobId();
+  prepareGetMaxJobId(m_db);
+  prepareJobsInsert(m_db);
+  database::transaction txn = m_db.startTransaction();
+  m_maxJobId = getMaxJobId(txn);
+  txn.commit();
 }
 
 inline std::string session::dbVersion()
@@ -46,15 +44,6 @@ inline std::string session::dbVersion()
   txn.commit();
 
   return version;
-}
-
-inline int session::getMaxJobId()
-{
-  int maxId = -1;
-  database::transaction txn = m_db.startTransaction();
-  maxId = m_db.getMaxJobId(txn, m_getMaxJobId);
-  txn.commit();
-  return maxId;
 }
 
 inline void session::run(const command_data& commandData)
@@ -72,6 +61,6 @@ inline void session::run(const book_job_data& commandData)
   jobs_record record { uuidStr, ++m_maxJobId, commandData.name };
   
   database::transaction txn = m_db.startTransaction();
-  insert(txn, m_insertJob, record);
+  insert(txn, record);
   txn.commit();
 }
