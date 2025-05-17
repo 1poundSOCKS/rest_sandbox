@@ -9,6 +9,7 @@
 #include <atomic>
 #include <chrono>
 #include <unistd.h>
+#include <sstream>
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>

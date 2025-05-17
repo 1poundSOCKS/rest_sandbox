@@ -2,6 +2,14 @@
 
 #include "database.h"
 
+std::string toString(std::time_t timestamp)
+{
+  std::tm* localTime = std::localtime(&timestamp);
+  std::ostringstream oss;
+  oss << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
+  return oss.str();
+}
+
 static constexpr char* preparedGetMaxJobId = "GET_MAX_JOB_ID";
 
 inline void prepareGetMaxJobId(database& db)
@@ -38,7 +46,7 @@ inline void prepareInsertJob(database& db)
 
 inline void insert(database::transaction& txn, const jobs_record& record)
 {
-    txn.exec_prepared(preparedInsertJob, record.transactionTimestamp, record.transactionId, record.jobId, record.jobName);
+    txn.exec_prepared(preparedInsertJob, toString(record.transactionTimestamp), record.transactionId, record.jobId, record.jobName);
 }
 
 inline void prepareSQL(database& db)
