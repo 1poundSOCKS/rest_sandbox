@@ -176,10 +176,16 @@ std::optional<command_data> getCommandDataFromRequestJson(const nlohmann::json& 
 
     if( command == "book_job" )
     {
-      book_job_request_data bookJobData;       
-      bookJobData.jobId = requestJson.contains("job_id") ? requestJson["job_id"] : std::optional<int64_t>();
-      bookJobData.jobName = requestJson["job_name"];
-      return command_data(bookJobData);
+      book_job_request_data requestData;
+      requestData.jobId = requestJson.contains("job_id") ? requestJson["job_id"] : std::optional<int64_t>();
+      requestData.jobName = requestJson["job_name"];
+      return command_data(requestData);
+    }
+    else if( command == "get_job" )
+    {
+      get_job_request_data requestData;
+      requestData.jobId = requestJson["job_id"];
+      return command_data(requestData);
     }
     else
     {

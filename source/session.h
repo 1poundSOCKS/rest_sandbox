@@ -10,11 +10,24 @@ struct book_job_request_data
 
 struct book_job_response_data
 {
+  int64_t code;
   int64_t jobId;
 };
 
-using command_data = std::variant<book_job_request_data>;
-using response_data = std::variant<book_job_response_data>;
+struct get_job_request_data
+{
+  int64_t jobId;
+};
+
+struct get_job_response_data
+{
+  int64_t code;
+  std::optional<int64_t> jobId;
+  std::optional<std::string> jobName;
+};
+
+using command_data = std::variant<book_job_request_data, get_job_request_data>;
+using response_data = std::variant<book_job_response_data, get_job_response_data>;
 
 class session
 {
@@ -26,7 +39,8 @@ public:
 
 private:
 
-  book_job_response_data run(const book_job_request_data& commandData);
+  response_data run(const book_job_request_data& requestData);
+  response_data run(const get_job_request_data& requestData);
 
   std::string m_dbConnection;
   database m_db;
@@ -54,22 +68,30 @@ inline std::string session::dbVersion()
 
 inline response_data session::run(const command_data& commandData)
 {
-  return std::visit([this](auto&& commandData)
+  return std::visit([this](auto&& requestData)
   {
-    return run(commandData);
+    return run(requestData);
   }, commandData);
 }
 
-inline book_job_response_data session::run(const book_job_request_data& request)
+inline response_data session::run(const book_job_request_data& requestData)
 {
   std::time_t now = std::time(nullptr);
   boost::uuids::uuid uuid = boost::uuids::random_generator()();
   std::string uuidStr = boost::lexical_cast<std::string>(uuid);
-  auto jobId = request.jobId.has_value() ? request.jobId.value() : ++m_maxJobId;
-  jobs_record record { now, uuidStr, jobId, request.jobName };
+  auto jobId = requestData.jobId.has_value() ? requestData.jobId.value() : ++m_maxJobId;
+  jobs_record record { now, uuidStr, jobId, requestData.jobName };
   
   database::transaction txn = m_db.startTransaction();
   insert(txn, record);
   txn.commit();
-  return { jobId };
+  return book_job_response_data { 0, jobId };
+}
+
+inline response_data session::run(const get_job_request_data& requestData)
+{
+  database::transaction txn = m_db.startTransaction();
+  auto outputData = getJob(txn, requestData.jobId);
+  txn.commit();
+  return outputData.has_value() ? get_job_response_data { 0, requestData.jobId, outputData->jobName } : get_job_response_data { 1, std::nullopt, std::nullopt };
 }

@@ -49,8 +49,37 @@ inline void insert(database::transaction& txn, const jobs_record& record)
     txn.exec_prepared(preparedInsertJob, toString(record.transactionTimestamp), record.transactionId, record.jobId, record.jobName);
 }
 
+static constexpr char* preparedGetJob = "GET_JOB";
+
+inline void prepareGetJob(database& db)
+{
+  db.prepareSQL(preparedGetJob, "SELECT job_id, job_name FROM jobs where job_id = $1 ORDER BY transaction_timestamp DESC");
+}
+
+struct get_job_data
+{
+  std::string jobName;
+};
+
+inline std::optional<get_job_data> getJob(database::transaction& txn, int64_t jobId)
+{
+  database::result r = txn.exec_prepared(preparedGetJob, jobId);
+
+  if( std::begin(r) != std::end(r) )
+  {
+    auto&& row = r.front();
+    auto jobName = row["job_name"];
+    return get_job_data { jobName.as<std::string>() };
+  }
+  else
+  {
+    return std::nullopt;
+  }
+}
+
 inline void prepareSQL(database& db)
 {
   prepareGetMaxJobId(db);
   prepareInsertJob(db);
+  prepareGetJob(db);
 }
