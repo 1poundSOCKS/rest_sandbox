@@ -30,7 +30,7 @@ struct jobs_record
 
 static constexpr char* preparedInsertJob = "INSERT_JOB";
 
-inline void prepareJobsInsert(database& db)
+inline void prepareInsertJob(database& db)
 {
   db.prepareSQL(preparedInsertJob, "INSERT INTO jobs(transaction_id, id, name) VALUES ($1, $2, $3)");
 }
@@ -38,4 +38,10 @@ inline void prepareJobsInsert(database& db)
 inline void insert(database::transaction& txn, const jobs_record& record)
 {
     txn.exec_prepared(preparedInsertJob, record.transactionId, record.id, record.name);
+}
+
+inline void prepareSQL(database& db)
+{
+  prepareGetMaxJobId(db);
+  prepareInsertJob(db);
 }

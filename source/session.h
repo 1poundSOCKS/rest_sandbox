@@ -28,8 +28,7 @@ private:
 
 inline session::session(const char* dbConnection) : m_dbConnection(dbConnection), m_maxJobId(-1), m_db(dbConnection)
 {
-  prepareGetMaxJobId(m_db);
-  prepareJobsInsert(m_db);
+  prepareSQL(m_db);
   database::transaction txn = m_db.startTransaction();
   m_maxJobId = getMaxJobId(txn);
   txn.commit();
