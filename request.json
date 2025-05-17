@@ -1,5 +1,5 @@
 {
 	"user": "mcob",
 	"command": "book_job",
-	"name": "TEST_JOB_05"
+	"job_name": "TEST_JOB_05"
 }
