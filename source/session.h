@@ -2,12 +2,18 @@
 
 #include "prepared_sql.h"
 
-struct book_job_data
+struct book_job_request_data
 {
-  std::string name;
+  std::string jobName;
 };
 
-using command_data = std::variant<book_job_data>;
+struct book_job_response_data
+{
+  int64_t jobId;
+};
+
+using command_data = std::variant<book_job_request_data>;
+using response_data = std::variant<book_job_response_data>;
 
 class session
 {
@@ -15,11 +21,11 @@ public:
   session(const char* dbConnection);
   void initialize();
   std::string dbVersion();
-  void run(const command_data& commandData);
+  response_data run(const command_data& commandData);
 
 private:
 
-  void run(const book_job_data& commandData);
+  book_job_response_data run(const book_job_request_data& commandData);
 
   std::string m_dbConnection;
   database m_db;
@@ -45,22 +51,24 @@ inline std::string session::dbVersion()
   return version;
 }
 
-inline void session::run(const command_data& commandData)
+inline response_data session::run(const command_data& commandData)
 {
-  std::visit([this](auto&& commandData)
+  return std::visit([this](auto&& commandData)
   {
-    run(commandData);
+    return run(commandData);
   }, commandData);
 }
 
-inline void session::run(const book_job_data& commandData)
+inline book_job_response_data session::run(const book_job_request_data& request)
 {
   std::time_t now = std::time(nullptr);
   boost::uuids::uuid uuid = boost::uuids::random_generator()();
   std::string uuidStr = boost::lexical_cast<std::string>(uuid);
-  jobs_record record { now, uuidStr, ++m_maxJobId, commandData.name };
+  auto jobId = ++m_maxJobId;
+  jobs_record record { now, uuidStr, jobId, request.jobName };
   
   database::transaction txn = m_db.startTransaction();
   insert(txn, record);
   txn.commit();
+  return { jobId };
 }

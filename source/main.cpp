@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "async_connection_handler.h"
 #include "session.h"
+#include "response_json.h"
 
 void run(std::shared_ptr<session> s);
 boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, boost::beast::http::request<boost::beast::http::string_body>& request, std::shared_ptr<session> s);
@@ -110,11 +111,16 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
 
     auto commandData = getCommandDataFromRequestJson(requestJson);
 
+    std::string responseString = g_responseBody;
+    
     try
     {
       if( commandData.has_value() )
       {
-        s->run(commandData.value());
+        auto response = s->run(commandData.value());
+        response_json responseJson;
+        std::visit(responseJson, response);
+        responseString = responseJson.toString();
       }
     }
     catch (const std::exception& e)
@@ -126,8 +132,6 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
       std::cout << "Unknown exception caught\n";
     }
 
-    std::string responseString = g_responseBody;
-    
     boost::beast::http::response<boost::beast::http::string_body> res(boost::beast::http::status::ok, req.version());
     res.set(boost::beast::http::field::server, "Beast");
     res.set(boost::beast::http::field::content_type, "text/json");
@@ -172,8 +176,8 @@ std::optional<command_data> getCommandDataFromRequestJson(const nlohmann::json& 
 
     if( command == "book_job" )
     {
-      book_job_data bookJobData;
-      bookJobData.name = requestJson["name"];
+      book_job_request_data bookJobData;
+      bookJobData.jobName = requestJson["name"];
       return command_data(bookJobData);
     }
     else
