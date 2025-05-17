@@ -4,6 +4,7 @@
 
 struct book_job_request_data
 {
+  std::optional<int64_t> jobId;
   std::string jobName;
 };
 
@@ -64,7 +65,7 @@ inline book_job_response_data session::run(const book_job_request_data& request)
   std::time_t now = std::time(nullptr);
   boost::uuids::uuid uuid = boost::uuids::random_generator()();
   std::string uuidStr = boost::lexical_cast<std::string>(uuid);
-  auto jobId = ++m_maxJobId;
+  auto jobId = request.jobId.has_value() ? request.jobId.value() : ++m_maxJobId;
   jobs_record record { now, uuidStr, jobId, request.jobName };
   
   database::transaction txn = m_db.startTransaction();
