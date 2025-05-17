@@ -23,7 +23,7 @@ private:
 
   std::string m_dbConnection;
   database m_db;
-  int m_maxJobId;
+  int64_t m_maxJobId;
 };
 
 inline session::session(const char* dbConnection) : m_dbConnection(dbConnection), m_maxJobId(-1), m_db(dbConnection)
@@ -55,9 +55,10 @@ inline void session::run(const command_data& commandData)
 
 inline void session::run(const book_job_data& commandData)
 {
+  std::time_t now = std::time(nullptr);
   boost::uuids::uuid uuid = boost::uuids::random_generator()();
   std::string uuidStr = boost::lexical_cast<std::string>(uuid);
-  jobs_record record { uuidStr, ++m_maxJobId, commandData.name };
+  jobs_record record { now, uuidStr, ++m_maxJobId, commandData.name };
   
   database::transaction txn = m_db.startTransaction();
   insert(txn, record);
