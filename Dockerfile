@@ -27,8 +27,8 @@ COPY CMakePresets.json .
 RUN cmake --preset linux && \
     cmake --build .
 
-COPY config.json .
+COPY config.docker.json ./config.json
 
 EXPOSE 8080
 
-CMD ["bin/rest_sandbox"]
+ENTRYPOINT ["bin/rest_sandbox"]
