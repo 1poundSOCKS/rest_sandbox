@@ -80,10 +80,10 @@ inline response_data session::run(const book_job_request_data& requestData)
   boost::uuids::uuid uuid = boost::uuids::random_generator()();
   std::string uuidStr = boost::lexical_cast<std::string>(uuid);
   auto jobId = requestData.jobId.has_value() ? requestData.jobId.value() : ++m_maxJobId;
-  jobs_record record { now, uuidStr, jobId, requestData.jobName };
+  insert_job_in in { now, uuidStr, jobId, requestData.jobName };
   
   database::transaction txn = m_db.startTransaction();
-  insert(txn, record);
+  insert(txn, in);
   txn.commit();
   return book_job_response_data { 0, jobId };
 }

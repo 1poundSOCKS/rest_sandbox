@@ -2,7 +2,7 @@
 
 #include "database.h"
 
-std::string toString(std::time_t timestamp)
+inline std::string toString(std::time_t timestamp)
 {
   std::tm* localTime = std::localtime(&timestamp);
   std::ostringstream oss;
@@ -10,7 +10,7 @@ std::string toString(std::time_t timestamp)
   return oss.str();
 }
 
-struct jobs_record
+struct insert_job_in
 {
   std::time_t transactionTimestamp;
   std::string transactionId;
@@ -25,7 +25,7 @@ inline void prepareInsertJob(database& db)
   db.prepareSQL(preparedInsertJob, "INSERT INTO jobs(transaction_timestamp, transaction_id, job_id, job_name) VALUES ($1, $2, $3, $4)");
 }
 
-inline void insert(database::transaction& txn, const jobs_record& record)
+inline void insert(database::transaction& txn, const insert_job_in& record)
 {
     txn.exec_prepared(preparedInsertJob, toString(record.transactionTimestamp), record.transactionId, record.jobId, record.jobName);
 }

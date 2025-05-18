@@ -9,7 +9,7 @@ inline void prepareGetMaxJobId(database& db)
   db.prepareSQL(preparedGetMaxJobId, "SELECT MAX(job_id) as max_job_id FROM jobs");
 }
 
-inline int getMaxJobId(database::transaction& txn)
+inline int64_t getMaxJobId(database::transaction& txn)
 {
   int maxId = -1;
   database::result r = txn.exec_prepared(preparedGetMaxJobId);

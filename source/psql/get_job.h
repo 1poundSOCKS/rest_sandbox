@@ -9,12 +9,12 @@ inline void prepareGetJob(database& db)
   db.prepareSQL(preparedGetJob, "SELECT job_id, job_name FROM jobs where job_id = $1 ORDER BY transaction_timestamp DESC");
 }
 
-struct get_job_data
+struct get_job_out
 {
   std::string jobName;
 };
 
-inline std::optional<get_job_data> getJob(database::transaction& txn, int64_t jobId)
+inline std::optional<get_job_out> getJob(database::transaction& txn, int64_t jobId)
 {
   database::result r = txn.exec_prepared(preparedGetJob, jobId);
 
@@ -22,7 +22,7 @@ inline std::optional<get_job_data> getJob(database::transaction& txn, int64_t jo
   {
     auto&& row = r.front();
     auto jobName = row["job_name"];
-    return get_job_data { jobName.as<std::string>() };
+    return get_job_out { jobName.as<std::string>() };
   }
   else
   {
