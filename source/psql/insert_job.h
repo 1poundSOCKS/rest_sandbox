@@ -31,10 +31,10 @@ namespace psql
   inline void insertJob(database::transaction& txn, const insert_job_in& record)
   {
       txn.exec_prepared(preparedInsertJob, pqxx::params(
-        std::string(toString(record.transactionTimestamp)), 
-        std::string(record.transactionId), 
+        toString(record.transactionTimestamp), 
+        record.transactionId, 
         static_cast<int64_t>(record.jobId), 
-        std::string(record.jobName)));
+        record.jobName));
   }
 
 };
