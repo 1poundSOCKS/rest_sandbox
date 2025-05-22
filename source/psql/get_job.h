@@ -5,7 +5,7 @@
 namespace psql
 {
 
-  static constexpr char* preparedGetJob = "GET_JOB";
+  static const char* preparedGetJob = "GET_JOB";
 
   inline void prepareGetJob(database& db)
   {
@@ -19,7 +19,7 @@ namespace psql
 
   inline std::optional<get_job_out> getJob(database::transaction& txn, int64_t jobId)
   {
-    database::result r = txn.exec_prepared(preparedGetJob, jobId);
+    database::result r = txn.exec_prepared(preparedGetJob, static_cast<int64_t>(jobId));
 
     if( std::begin(r) != std::end(r) )
     {

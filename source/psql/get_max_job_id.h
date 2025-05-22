@@ -5,7 +5,7 @@
 namespace psql
 {
 
-  static constexpr char* preparedGetMaxJobId = "GET_MAX_JOB_ID";
+  static constexpr const char* preparedGetMaxJobId = "GET_MAX_JOB_ID";
 
   inline void prepareGetMaxJobId(database& db)
   {
