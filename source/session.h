@@ -54,11 +54,9 @@ inline session::session(const char* dbConnection) : m_dbConnection(dbConnection)
 inline std::string session::dbVersion()
 {
   std::string version = "";
-
   database::transaction txn = m_db.startTransaction();
   version = m_db.dbVersion(txn);
   txn.commit();
-
   return version;
 }
 
