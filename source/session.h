@@ -26,21 +26,16 @@ struct get_job_response_data
   std::optional<std::string> jobName;
 };
 
-using command_data = std::variant<book_job_request_data, get_job_request_data>;
-using response_data = std::variant<book_job_response_data, get_job_response_data>;
-
 class session
 {
 public:
   session(const char* dbConnection);
   void initialize();
   std::string dbVersion();
-  response_data run(const command_data& commandData);
+  book_job_response_data run(const book_job_request_data& requestData);
+  get_job_response_data run(const get_job_request_data& requestData);
 
 private:
-
-  response_data run(const book_job_request_data& requestData);
-  response_data run(const get_job_request_data& requestData);
 
   std::string m_dbConnection;
   database m_db;
@@ -66,15 +61,7 @@ inline std::string session::dbVersion()
   return version;
 }
 
-inline response_data session::run(const command_data& commandData)
-{
-  return std::visit([this](auto&& requestData)
-  {
-    return run(requestData);
-  }, commandData);
-}
-
-inline response_data session::run(const book_job_request_data& requestData)
+inline book_job_response_data session::run(const book_job_request_data& requestData)
 {
   std::time_t now = std::time(nullptr);
   boost::uuids::uuid uuid = boost::uuids::random_generator()();
@@ -88,7 +75,7 @@ inline response_data session::run(const book_job_request_data& requestData)
   return book_job_response_data { 0, jobId };
 }
 
-inline response_data session::run(const get_job_request_data& requestData)
+inline get_job_response_data session::run(const get_job_request_data& requestData)
 {
   database::transaction txn = m_db.startTransaction();
   auto outputData = getJob(txn, requestData.jobId);

@@ -6,7 +6,6 @@
 void run(std::shared_ptr<session> s);
 boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, boost::beast::http::request<boost::beast::http::string_body>& request, std::shared_ptr<session> s);
 boost::beast::http::response<boost::beast::http::string_body> FormatErrorResponse(boost::beast::http::request<boost::beast::http::string_body>& req);
-std::optional<command_data> getCommandDataFromRequestJson(const nlohmann::json& requestJson);
 
 std::atomic<bool> running(true);
 
@@ -108,29 +107,26 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
     nlohmann::json requestJson = nlohmann::json::parse(req.body());
 
     std::string command = requestJson["command"];
+    response_json responseJson;
 
-    auto commandData = getCommandDataFromRequestJson(requestJson);
+    if( command == "book_job" )
+    {
+      book_job_request_data requestData;
+      requestData.jobId = requestJson.contains("job_id") ? requestJson["job_id"] : std::optional<int64_t>();
+      requestData.jobName = requestJson["job_name"];
+      auto responseData = s->run(requestData);
+      responseJson(responseData);
+    }
+    else if( command == "get_job" )
+    {
+      get_job_request_data requestData;
+      requestData.jobId = requestJson["job_id"];
+      auto responseData = s->run(requestData);
+      responseJson(responseData);
+    }
 
     std::string responseString = g_responseBody;
-    
-    try
-    {
-      if( commandData.has_value() )
-      {
-        auto response = s->run(commandData.value());
-        response_json responseJson;
-        std::visit(responseJson, response);
-        responseString = responseJson.toString();
-      }
-    }
-    catch (const std::exception& e)
-    {
-      std::cout << "Error: " << e.what() << std::endl;
-    }
-    catch (...)
-    {
-      std::cout << "Unknown exception caught\n";
-    }
+    responseString = responseJson.toString();
 
     boost::beast::http::response<boost::beast::http::string_body> res(boost::beast::http::status::ok, req.version());
     res.set(boost::beast::http::field::server, "Beast");
@@ -168,27 +164,4 @@ boost::beast::http::response<boost::beast::http::string_body> FormatErrorRespons
   res.body() = to_string(responseJson);
   res.prepare_payload();
   return res;
-}
-
-std::optional<command_data> getCommandDataFromRequestJson(const nlohmann::json& requestJson)
-{
-    std::string command = requestJson["command"];
-
-    if( command == "book_job" )
-    {
-      book_job_request_data requestData;
-      requestData.jobId = requestJson.contains("job_id") ? requestJson["job_id"] : std::optional<int64_t>();
-      requestData.jobName = requestJson["job_name"];
-      return command_data(requestData);
-    }
-    else if( command == "get_job" )
-    {
-      get_job_request_data requestData;
-      requestData.jobId = requestJson["job_id"];
-      return command_data(requestData);
-    }
-    else
-    {
-      return std::nullopt;
-    }
 }
