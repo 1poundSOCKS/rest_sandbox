@@ -1,5 +1,6 @@
 #pragma once
 
+#include "database.h"
 #include "psql/psql.h"
 
 struct book_job_request_data
@@ -44,9 +45,9 @@ private:
 
 inline session::session(const char* dbConnection) : m_dbConnection(dbConnection), m_maxJobId(-1), m_db(dbConnection)
 {
-  prepareSQL(m_db);
+  psql::prepareSQL(m_db);
   database::transaction txn = m_db.startTransaction();
-  m_maxJobId = getMaxJobId(txn);
+  m_maxJobId = psql::getMaxJobId(txn);
   txn.commit();
 }
 
@@ -67,10 +68,10 @@ inline book_job_response_data session::run(const book_job_request_data& requestD
   boost::uuids::uuid uuid = boost::uuids::random_generator()();
   std::string uuidStr = boost::lexical_cast<std::string>(uuid);
   auto jobId = requestData.jobId.has_value() ? requestData.jobId.value() : ++m_maxJobId;
-  insert_job_in in { now, uuidStr, jobId, requestData.jobName };
+  psql::insert_job_in in { now, uuidStr, jobId, requestData.jobName };
   
   database::transaction txn = m_db.startTransaction();
-  insert(txn, in);
+  psql::insertJob(txn, in);
   txn.commit();
   return book_job_response_data { 0, jobId };
 }
@@ -78,7 +79,7 @@ inline book_job_response_data session::run(const book_job_request_data& requestD
 inline get_job_response_data session::run(const get_job_request_data& requestData)
 {
   database::transaction txn = m_db.startTransaction();
-  auto outputData = getJob(txn, requestData.jobId);
+  auto outputData = psql::getJob(txn, requestData.jobId);
   txn.commit();
   return outputData.has_value() ? get_job_response_data { 0, requestData.jobId, outputData->jobName } : get_job_response_data { 1, std::nullopt, std::nullopt };
 }

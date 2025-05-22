@@ -25,7 +25,7 @@ inline void prepareInsertJob(database& db)
   db.prepareSQL(preparedInsertJob, "INSERT INTO jobs(transaction_timestamp, transaction_id, job_id, job_name) VALUES ($1, $2, $3, $4)");
 }
 
-inline void insert(database::transaction& txn, const insert_job_in& record)
+inline void insertJob(database::transaction& txn, const insert_job_in& record)
 {
     txn.exec_prepared(preparedInsertJob, toString(record.transactionTimestamp), record.transactionId, record.jobId, record.jobName);
 }
