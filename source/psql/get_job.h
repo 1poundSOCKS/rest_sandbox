@@ -9,7 +9,12 @@ namespace psql
 
   inline void prepareGetJob(database& db)
   {
-    db.prepareSQL(preparedGetJob, "SELECT job_id, job_name FROM jobs where job_id = $1 ORDER BY transaction_timestamp DESC");
+    db.prepareSQL(preparedGetJob, 
+      "SELECT job_id, job_name "
+      "FROM jobs "
+      "where job_id = $1 "
+      "ORDER BY transaction_timestamp DESC "
+      "LIMIT 1");
   }
 
   struct get_job_out
