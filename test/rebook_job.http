@@ -4,5 +4,6 @@ content-type: application/json
 {
 	"user": "mcob",
 	"command": "book_job",
-	"job_name": "MC_JOB_01"
+	"job_id": 9,
+	"job_name": "MC_JOB_03"
 }
