@@ -1,1 +1,0 @@
-/usr/bin/c++ -g CMakeFiles/rest_sandbox.dir/source/main.cpp.o -o bin/rest_sandbox  -lpqxx -lpq 

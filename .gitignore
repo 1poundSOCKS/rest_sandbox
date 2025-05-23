@@ -44,3 +44,4 @@
 CMakeCache.txt
 *.sln
 Makefile
+/out
