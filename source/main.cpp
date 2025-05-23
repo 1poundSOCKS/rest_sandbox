@@ -109,7 +109,7 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
     std::string command = requestJson["command"];
     response_json responseJson;
 
-    if( command == "book_job" )
+    if( command == "book-job" )
     {
       book_job_request_data requestData;
       requestData.jobId = requestJson.contains("job_id") ? requestJson["job_id"] : std::optional<int64_t>();
@@ -117,12 +117,16 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
       auto responseData = s->run(requestData);
       responseJson(responseData);
     }
-    else if( command == "get_job" )
+    else if( command == "get-job" )
     {
       get_job_request_data requestData;
       requestData.jobId = requestJson["job_id"];
       auto responseData = s->run(requestData);
       responseJson(responseData);
+    }
+    else
+    {
+      responseJson("invalid command");
     }
 
     std::string responseString = g_responseBody;

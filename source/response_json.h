@@ -8,9 +8,11 @@ public:
 
   void operator()(const book_job_response_data& responseData);
   void operator()(const get_job_response_data& responseData);
+  void operator()(const char* responseMessage);
   std::string toString() const;
 
 private:
+
   nlohmann::json m_responseJson;
 
 };
@@ -31,4 +33,10 @@ inline void response_json::operator()(const get_job_response_data& responseData)
 std::string response_json::toString() const
 {
   return to_string(m_responseJson);
+}
+
+inline void response_json::operator()(const char* responseMessage)
+{
+  m_responseJson["code"] = 999;
+  m_responseJson["message"] = responseMessage;
 }
