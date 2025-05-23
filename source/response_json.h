@@ -4,7 +4,8 @@
 
 std::string time_t_to_string(std::time_t t)
 {
-    std::tm* tm_ptr = std::localtime(&t);  // or std::gmtime for UTC
+    // std::tm* tm_ptr = std::localtime(&t);
+    std::tm* tm_ptr = std::gmtime(&t);
     std::ostringstream oss;
     oss << std::put_time(tm_ptr, "%Y-%m-%d %H:%M:%S");
     return oss.str();
