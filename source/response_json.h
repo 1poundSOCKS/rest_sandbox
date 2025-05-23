@@ -26,6 +26,8 @@ inline void response_json::operator()(const book_job_response_data& responseData
 inline void response_json::operator()(const get_job_response_data& responseData)
 {
   m_responseJson["code"] = responseData.code;
+  m_responseJson["transaction_timestamp"] = responseData.transactionTime;
+  m_responseJson["transaction_id"] = responseData.transactionId;
   if( responseData.jobId.has_value() ) m_responseJson["job_id"] = responseData.jobId.value();
   if( responseData.jobName.has_value() ) m_responseJson["job_name"] = responseData.jobName.value();
 }

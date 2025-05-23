@@ -10,7 +10,7 @@ namespace psql
   inline void prepareGetJob(database& db)
   {
     db.prepareSQL(preparedGetJob, 
-      "SELECT job_id, job_name "
+      "SELECT transaction_timestamp, transaction_id, job_id, job_name "
       "FROM jobs "
       "where job_id = $1 "
       "ORDER BY transaction_timestamp DESC "
@@ -19,8 +19,18 @@ namespace psql
 
   struct get_job_out
   {
+    std::time_t transactionTime;
+    std::string transactionId;
     std::string jobName;
   };
+
+  inline std::optional<std::time_t> convertTimestamp(const char* timestampString)
+  {
+      std::tm tm = {};
+      std::istringstream ss(timestampString);
+      ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
+      return ss.fail() ? std::optional<std::time_t>() : std::mktime(&tm);
+  }
 
   inline std::optional<get_job_out> getJob(database::transaction& txn, int64_t jobId)
   {
@@ -29,8 +39,17 @@ namespace psql
     if( std::begin(r) != std::end(r) )
     {
       auto&& row = r.front();
+      auto transactionTime = row["transaction_timestamp"];
+      auto transactionId = row["transaction_id"];
       auto jobName = row["job_name"];
-      return get_job_out { jobName.as<std::string>() };
+
+      auto convertedTimestamp = convertTimestamp(transactionTime.as<std::string>().c_str());      
+
+      return convertedTimestamp.has_value() ? get_job_out{
+        convertedTimestamp.value(),
+        transactionId.as<std::string>(),
+        jobName.as<std::string>()
+      } : std::optional<get_job_out>();
     }
     else
     {

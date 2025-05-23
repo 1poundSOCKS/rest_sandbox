@@ -122,7 +122,7 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
       get_job_request_data requestData;
       requestData.jobId = requestJson["job_id"];
       auto responseData = s->run(requestData);
-      responseJson(responseData);
+      responseData.has_value() ? responseJson(responseData.value()) : responseJson("no output");
     }
     else
     {
