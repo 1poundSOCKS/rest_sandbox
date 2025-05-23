@@ -2,6 +2,14 @@
 
 #include "session.h"
 
+std::string time_t_to_string(std::time_t t)
+{
+    std::tm* tm_ptr = std::localtime(&t);  // or std::gmtime for UTC
+    std::ostringstream oss;
+    oss << std::put_time(tm_ptr, "%Y-%m-%d %H:%M:%S");
+    return oss.str();
+}
+
 class response_json
 {
 public:
@@ -26,7 +34,7 @@ inline void response_json::operator()(const book_job_response_data& responseData
 inline void response_json::operator()(const get_job_response_data& responseData)
 {
   m_responseJson["code"] = responseData.code;
-  m_responseJson["transaction_timestamp"] = responseData.transactionTime;
+  m_responseJson["transaction_timestamp"] = time_t_to_string(responseData.transactionTime);
   m_responseJson["transaction_id"] = responseData.transactionId;
   if( responseData.jobId.has_value() ) m_responseJson["job_id"] = responseData.jobId.value();
   if( responseData.jobName.has_value() ) m_responseJson["job_name"] = responseData.jobName.value();
