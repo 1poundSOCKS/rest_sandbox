@@ -117,11 +117,9 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
 
     if( command == "book-job" )
     {
-      book_job_request_data requestData;
-      requestData.jobId = requestJson.contains("job_id") ? requestJson["job_id"] : std::optional<int64_t>();
-      requestData.jobName = requestJson["job_name"];
+      book_job_cmd::request_data requestData = book_job_cmd::formatRequest(requestJson);
       auto responseData = s->run(requestData);
-      responseJson(responseData);
+      altResponseJson = responseData.has_value() ? book_job_cmd::formatResponse(responseData.value()) : std::optional<nlohmann::json>();
     }
     else if( command == "get-job" )
     {

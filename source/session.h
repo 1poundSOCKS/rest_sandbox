@@ -3,6 +3,7 @@
 #include "database.h"
 #include "psql/psql.h"
 #include "commands/get_job_cmd.h"
+#include "commands/book_job_cmd.h"
 
 struct book_job_request_data
 {
@@ -22,7 +23,7 @@ public:
   session(const char* dbConnection);
   void initialize();
   std::string dbVersion();
-  book_job_response_data run(const book_job_request_data& requestData);
+  std::optional<book_job_cmd::response_data> run(book_job_cmd::request_data requestData);
   std::optional<get_job_cmd::response_data> run(get_job_cmd::request_data requestData);
 
 private:
@@ -50,18 +51,11 @@ inline std::string session::dbVersion()
   return version;
 }
 
-inline book_job_response_data session::run(const book_job_request_data& requestData)
+inline std::optional<book_job_cmd::response_data> session::run(book_job_cmd::request_data requestData)
 {
-  std::time_t now = std::time(nullptr);
-  boost::uuids::uuid uuid = boost::uuids::random_generator()();
-  std::string uuidStr = boost::lexical_cast<std::string>(uuid);
   auto jobId = requestData.jobId.has_value() ? requestData.jobId.value() : ++m_maxJobId;
-  psql::insert_job_in in { jobId, requestData.jobName };
-  
-  database::transaction txn = m_db->startTransaction();
-  psql::insertJob(txn, now, uuidStr.c_str(), in);
-  txn.commit();
-  return book_job_response_data { 0, jobId };
+  requestData.jobId = jobId;
+  return book_job_cmd::run(m_db, requestData);
 }
 
 inline std::optional<get_job_cmd::response_data> session::run(get_job_cmd::request_data requestData)
