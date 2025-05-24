@@ -27,8 +27,8 @@ namespace book_job_cmd
   inline nlohmann::json formatResponse(book_job_cmd::response_data responseData)
   {
     nlohmann::json responseJson;
-    responseJson["code"] = responseData.code;
-    responseJson["job_id"] = responseData.jobId;
+    responseJson["header"]["code"] = responseData.code;
+    responseJson["body"]["job_id"] = responseData.jobId;
     return responseJson;
   }
 

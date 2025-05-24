@@ -11,11 +11,16 @@ namespace get_job_cmd
 
   struct response_data
   {
+    struct body_type
+    {
+      std::time_t transactionTime;
+      std::string transactionId;
+      int64_t jobId;
+      std::string jobName;
+    };
+
     int64_t code;
-    std::time_t transactionTime;
-    std::string transactionId;
-    std::optional<int64_t> jobId;
-    std::optional<std::string> jobName;
+    std::optional<body_type> body;
   };
 
   inline request_data formatRequest(nlohmann::json requestJson)
@@ -28,26 +33,47 @@ namespace get_job_cmd
   inline nlohmann::json formatResponse(get_job_cmd::response_data responseData)
   {
     nlohmann::json responseJson;
-    responseJson["code"] = responseData.code;
-    responseJson["transaction_timestamp"] = time_t_to_string(responseData.transactionTime);
-    responseJson["transaction_id"] = responseData.transactionId;
-    if( responseData.jobId.has_value() ) responseJson["job_id"] = responseData.jobId.value();
-    if( responseData.jobName.has_value() ) responseJson["job_name"] = responseData.jobName.value();
+    responseJson["header"]["code"] = responseData.code;
+ 
+    if( responseData.body.has_value() )
+    {
+      auto&& body = responseData.body.value();
+      responseJson["body"]["transaction_timestamp"] = time_t_to_string(body.transactionTime);
+      responseJson["body"]["transaction_id"] = body.transactionId;
+      responseJson["body"]["job_id"] = body.jobId;
+      responseJson["body"]["job_name"] = body.jobName;
+    }
+
     return responseJson;
   }
 
   inline std::optional<response_data> run(std::shared_ptr<database> db, request_data requestData)
   {
+    std::optional<response_data> responseData;
+
     database::transaction txn = db->startTransaction();
     auto outputData = psql::getJob(txn, requestData.jobId);
     txn.commit();
-    
-    return outputData.has_value() ? response_data {
-        0, 
+
+    if( outputData.has_value() )
+    {
+      responseData = response_data();
+      responseData->code = 0;
+
+      responseData->body = response_data::body_type
+      {
         outputData->transactionTime, 
         outputData->transactionId, 
         requestData.jobId, 
         outputData->jobName
-      } : std::optional<response_data>();
+      };
+    }
+    else
+    {
+      responseData = response_data();
+      responseData->code = 1;
+    }
+
+    return responseData;
   }
 };
