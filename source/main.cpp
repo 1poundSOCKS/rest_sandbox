@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "async_connection_handler.h"
 #include "session.h"
-#include "response_json.h"
 
 void run(std::shared_ptr<session> s);
 boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boost::asio::io_context& ioc, boost::beast::http::request<boost::beast::http::string_body>& request, std::shared_ptr<session> s);
@@ -110,8 +109,7 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
     nlohmann::json requestJson = nlohmann::json::parse(req.body());
 
     std::string command = requestJson["command"];
-    response_json responseJson;
-    std::optional<nlohmann::json> altResponseJson;
+    std::optional<nlohmann::json> responseJson;
 
     std::cout << "Command: " << command << "\n";
 
@@ -119,24 +117,26 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
     {
       book_job_cmd::request_data requestData = book_job_cmd::formatRequest(requestJson);
       auto responseData = s->run(requestData);
-      altResponseJson = responseData.has_value() ? book_job_cmd::formatResponse(responseData.value()) : std::optional<nlohmann::json>();
+      responseJson = responseData.has_value() ? book_job_cmd::formatResponse(responseData.value()) : std::optional<nlohmann::json>();
     }
     else if( command == "get-job" )
     {
       get_job_cmd::request_data requestData = get_job_cmd::formatRequest(requestJson);
       auto responseData = s->run(requestData);
-      altResponseJson = responseData.has_value() ? get_job_cmd::formatResponse(responseData.value()) : std::optional<nlohmann::json>();
+      responseJson = responseData.has_value() ? get_job_cmd::formatResponse(responseData.value()) : std::optional<nlohmann::json>();
     }
     else
     {
-      responseJson("invalid command");
+      responseJson = nlohmann::json();
+      responseJson.value()["code"] = 999;
+      responseJson.value()["message"] = "invalid command";
     }
 
     boost::beast::http::response<boost::beast::http::string_body> res(boost::beast::http::status::ok, req.version());
     res.set(boost::beast::http::field::server, "Beast");
     res.set(boost::beast::http::field::content_type, "text/json");
     res.keep_alive(req.keep_alive());
-    res.body() = altResponseJson.has_value() ? to_string(altResponseJson.value()) : responseJson.toString();
+    res.body() = to_string(responseJson.value());
     res.prepare_payload();
     return res;
   }
