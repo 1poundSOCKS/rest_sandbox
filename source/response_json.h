@@ -1,22 +1,14 @@
 #pragma once
 
+#include "commands/get_job_cmd.h"
 #include "session.h"
-
-std::string time_t_to_string(std::time_t t)
-{
-    // std::tm* tm_ptr = std::localtime(&t);
-    std::tm* tm_ptr = std::gmtime(&t);
-    std::ostringstream oss;
-    oss << std::put_time(tm_ptr, "%Y-%m-%d %H:%M:%S");
-    return oss.str();
-}
 
 class response_json
 {
 public:
 
   void operator()(const book_job_response_data& responseData);
-  void operator()(const get_job_response_data& responseData);
+  void operator()(get_job_cmd::response_data responseData);
   void operator()(const char* responseMessage);
   std::string toString() const;
 
@@ -32,7 +24,7 @@ inline void response_json::operator()(const book_job_response_data& responseData
   m_responseJson["job_id"] = responseData.jobId;
 }
 
-inline void response_json::operator()(const get_job_response_data& responseData)
+inline void response_json::operator()(get_job_cmd::response_data responseData)
 {
   m_responseJson["code"] = responseData.code;
   m_responseJson["transaction_timestamp"] = time_t_to_string(responseData.transactionTime);

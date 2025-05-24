@@ -6,7 +6,7 @@
 
 namespace psql
 {
-  inline void prepareSQL(database& db)
+  inline void prepareSQL(std::shared_ptr<database> db)
   {
     prepareGetMaxJobId(db);
     prepareInsertJob(db);

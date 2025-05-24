@@ -79,12 +79,15 @@ void run(std::shared_ptr<session> s)
       sessionData->response = ProcessRequest(ioc, sessionData->request, s);
     });
 
+    std::cout << "Running..." << std::endl;
+
     while (running)
     {
-      std::cout << "Running..." << std::endl;
       std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     
+    std::cout << "Stopped" << std::endl;
+
     async_connection_handler::stop();
 
     std::cout << "Terminating" << std::endl;
@@ -108,6 +111,9 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
 
     std::string command = requestJson["command"];
     response_json responseJson;
+    std::optional<nlohmann::json> altResponseJson;
+
+    std::cout << "Command: " << command << "\n";
 
     if( command == "book-job" )
     {
@@ -119,10 +125,9 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
     }
     else if( command == "get-job" )
     {
-      get_job_request_data requestData;
-      requestData.jobId = requestJson["job_id"];
+      get_job_cmd::request_data requestData = get_job_cmd::formatRequest(requestJson);
       auto responseData = s->run(requestData);
-      responseData.has_value() ? responseJson(responseData.value()) : responseJson("no output");
+      altResponseJson = responseData.has_value() ? get_job_cmd::formatResponse(responseData.value()) : std::optional<nlohmann::json>();
     }
     else
     {
@@ -133,7 +138,7 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
     res.set(boost::beast::http::field::server, "Beast");
     res.set(boost::beast::http::field::content_type, "text/json");
     res.keep_alive(req.keep_alive());
-    res.body() = responseJson.toString();
+    res.body() = altResponseJson.has_value() ? to_string(altResponseJson.value()) : responseJson.toString();
     res.prepare_payload();
     return res;
   }

@@ -7,9 +7,9 @@ namespace psql
 
   static constexpr const char* preparedGetMaxJobId = "GET_MAX_JOB_ID";
 
-  inline void prepareGetMaxJobId(database& db)
+  inline void prepareGetMaxJobId(std::shared_ptr<database> db)
   {
-    db.prepareSQL(preparedGetMaxJobId, "SELECT MAX(job_id) as max_job_id FROM jobs");
+    db->prepareSQL(preparedGetMaxJobId, "SELECT MAX(job_id) as max_job_id FROM jobs");
   }
 
   inline int64_t getMaxJobId(database::transaction& txn)

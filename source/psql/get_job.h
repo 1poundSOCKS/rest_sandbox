@@ -7,9 +7,9 @@ namespace psql
 
   static const char* preparedGetJob = "GET_JOB";
 
-  inline void prepareGetJob(database& db)
+  inline void prepareGetJob(std::shared_ptr<database> db)
   {
-    db.prepareSQL(preparedGetJob, 
+    db->prepareSQL(preparedGetJob, 
       "SELECT transaction_timestamp, transaction_id, job_id, job_name "
       "FROM jobs "
       "where job_id = $1 "
@@ -23,14 +23,6 @@ namespace psql
     std::string transactionId;
     std::string jobName;
   };
-
-  inline std::optional<std::time_t> convertTimestamp(const char* timestampString)
-  {
-      std::tm tm = {};
-      std::istringstream ss(timestampString);
-      ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
-      return ss.fail() ? std::optional<std::time_t>() : std::mktime(&tm);
-  }
 
   inline std::optional<get_job_out> getJob(database::transaction& txn, int64_t jobId)
   {

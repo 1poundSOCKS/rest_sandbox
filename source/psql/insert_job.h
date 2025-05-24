@@ -21,9 +21,9 @@ namespace psql
 
   static constexpr const char* preparedInsertJob = "INSERT_JOB";
 
-  inline void prepareInsertJob(database& db)
+  inline void prepareInsertJob(std::shared_ptr<database> db)
   {
-    db.prepareSQL(preparedInsertJob, "INSERT INTO jobs(transaction_timestamp, transaction_id, job_id, job_name) VALUES ($1, $2, $3, $4)");
+    db->prepareSQL(preparedInsertJob, "INSERT INTO jobs(transaction_timestamp, transaction_id, job_id, job_name) VALUES ($1, $2, $3, $4)");
   }
 
   inline void insertJob(database::transaction& txn, 

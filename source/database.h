@@ -1,5 +1,21 @@
 #pragma once
 
+inline std::optional<std::time_t> convertTimestamp(const char* timestampString)
+{
+    std::tm tm = {};
+    std::istringstream ss(timestampString);
+    ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
+    return ss.fail() ? std::optional<std::time_t>() : std::mktime(&tm);
+}
+
+inline std::string time_t_to_string(std::time_t t)
+{
+    std::tm* tm_ptr = std::localtime(&t);
+    std::ostringstream oss;
+    oss << std::put_time(tm_ptr, "%Y-%m-%d %H:%M:%S");
+    return oss.str();
+}
+
 class database
 {
 public:
