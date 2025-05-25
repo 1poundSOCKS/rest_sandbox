@@ -15,7 +15,7 @@ namespace psql
 
   inline void prepareInsertJob(std::shared_ptr<database> db)
   {
-    db->prepareSQL(preparedInsertJob, "INSERT INTO jobs(transaction_timestamp, transaction_id, job_id, job_name) VALUES ($1, $2, $3, $4)");
+    db->prepareSQL(preparedInsertJob, "INSERT INTO jobs(transaction_id, transaction_time, job_id, job_name) VALUES ($1, $2, $3, $4)");
   }
 
   inline void insertJob(database::transaction& txn, 
@@ -24,8 +24,8 @@ namespace psql
     const insert_job_in& record)
   {
       txn.exec_prepared(preparedInsertJob, pqxx::params(
-        time_t_to_string(transactionTimestamp), 
         transactionId, 
+        time_t_to_string(transactionTimestamp), 
         static_cast<int64_t>(record.jobId), 
         record.jobName));
   }

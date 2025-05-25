@@ -10,10 +10,10 @@ namespace psql
   inline void prepareGetJob(std::shared_ptr<database> db)
   {
     db->prepareSQL(preparedGetJob, 
-      "SELECT transaction_timestamp, transaction_id, job_id, job_name "
+      "SELECT transaction_id, transaction_time, job_id, job_name "
       "FROM jobs "
       "where job_id = $1 "
-      "ORDER BY transaction_timestamp DESC "
+      "ORDER BY transaction_time, transaction_id DESC "
       "LIMIT 1");
   }
 
@@ -31,7 +31,7 @@ namespace psql
     if( std::begin(r) != std::end(r) )
     {
       auto&& row = r.front();
-      auto transactionTime = row["transaction_timestamp"];
+      auto transactionTime = row["transaction_time"];
       auto transactionId = row["transaction_id"];
       auto jobName = row["job_name"];
 
