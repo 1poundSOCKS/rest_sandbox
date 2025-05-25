@@ -5,14 +5,6 @@
 namespace psql
 {
 
-  inline std::string toString(std::time_t timestamp)
-  {
-    std::tm* localTime = std::localtime(&timestamp);
-    std::ostringstream oss;
-    oss << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
-    return oss.str();
-  }
-
   struct insert_job_in
   {
     int64_t jobId;
@@ -32,7 +24,7 @@ namespace psql
     const insert_job_in& record)
   {
       txn.exec_prepared(preparedInsertJob, pqxx::params(
-        toString(transactionTimestamp), 
+        time_t_to_string(transactionTimestamp), 
         transactionId, 
         static_cast<int64_t>(record.jobId), 
         record.jobName));
