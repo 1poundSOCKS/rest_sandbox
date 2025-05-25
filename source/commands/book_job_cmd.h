@@ -19,8 +19,16 @@ namespace book_job_cmd
   inline request_data formatRequest(nlohmann::json requestJson)
   {
     request_data requestData;
-    requestData.jobId = requestJson.contains("job_id") ? requestJson["job_id"] : std::optional<int64_t>();
-    requestData.jobName = requestJson["job_name"];
+    if( requestJson.contains("body"))
+    {
+      auto&& body = requestJson["body"];
+
+      if( body.is_object() )
+      {
+        requestData.jobId = body.contains("job_id") ? body["job_id"] : std::optional<int64_t>();
+        requestData.jobName = body["job_name"];
+      }
+    }
     return requestData;
   }
 

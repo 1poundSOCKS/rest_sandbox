@@ -26,7 +26,7 @@ namespace get_job_cmd
   inline request_data formatRequest(nlohmann::json requestJson)
   {
       request_data requestData;
-      requestData.jobId = requestJson["job_id"];
+      requestData.jobId = requestJson["body"]["job_id"];
       return requestData;
   }
 

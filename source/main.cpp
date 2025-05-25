@@ -108,7 +108,7 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
   {
     nlohmann::json requestJson = nlohmann::json::parse(req.body());
 
-    std::string command = requestJson["command"];
+    std::string command = requestJson["header"]["command"];
     std::optional<nlohmann::json> responseJson;
 
     std::cout << "Command: " << command << "\n";
