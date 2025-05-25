@@ -1,6 +1,6 @@
 #pragma once
 
-inline std::optional<std::time_t> convertTimestamp(const char* timestampString)
+inline std::optional<std::time_t> convertTime(const char* timestampString)
 {
     std::tm tm = {};
     std::istringstream ss(timestampString);

@@ -19,8 +19,8 @@ namespace psql
 
   struct get_job_out
   {
-    std::time_t transactionTime;
     std::string transactionId;
+    std::time_t transactionTime;
     std::string jobName;
   };
 
@@ -31,15 +31,15 @@ namespace psql
     if( std::begin(r) != std::end(r) )
     {
       auto&& row = r.front();
-      auto transactionTime = row["transaction_time"];
       auto transactionId = row["transaction_id"];
+      auto transactionTime = row["transaction_time"];
       auto jobName = row["job_name"];
 
-      auto convertedTimestamp = convertTimestamp(transactionTime.as<std::string>().c_str());      
+      auto convertedTime = convertTime(transactionTime.as<std::string>().c_str());
 
-      return convertedTimestamp.has_value() ? get_job_out{
-        convertedTimestamp.value(),
+      return convertedTime.has_value() ? get_job_out{
         transactionId.as<std::string>(),
+        convertedTime.value(),
         jobName.as<std::string>()
       } : std::optional<get_job_out>();
     }

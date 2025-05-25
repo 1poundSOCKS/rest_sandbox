@@ -19,13 +19,13 @@ namespace psql
   }
 
   inline void insertJob(database::transaction& txn, 
-    std::time_t transactionTimestamp,
+    std::time_t transactionTime,
     const char* transactionId,
     const insert_job_in& record)
   {
       txn.exec_prepared(preparedInsertJob, pqxx::params(
         transactionId, 
-        time_t_to_string(transactionTimestamp), 
+        time_t_to_string(transactionTime), 
         static_cast<int64_t>(record.jobId), 
         record.jobName));
   }
