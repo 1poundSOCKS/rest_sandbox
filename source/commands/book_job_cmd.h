@@ -8,6 +8,7 @@ namespace book_job_cmd
   {
     std::optional<int64_t> jobId;
     std::string jobName;
+    unsigned int duration;
   };
 
   struct response_data
@@ -27,6 +28,7 @@ namespace book_job_cmd
       {
         requestData.jobId = body.contains("job_id") ? body["job_id"] : std::optional<int64_t>();
         requestData.jobName = body["job_name"];
+        requestData.duration = body["duration"];
       }
     }
     return requestData;
@@ -45,7 +47,7 @@ namespace book_job_cmd
     std::time_t now = std::time(nullptr);
     boost::uuids::uuid uuid = boost::uuids::random_generator()();
     std::string uuidStr = boost::lexical_cast<std::string>(uuid);
-    psql::insert_job_in in { requestData.jobId.value(), requestData.jobName };
+    psql::insert_job_in in { requestData.jobId.value(), requestData.jobName, requestData.duration };
     
     database::transaction txn = db->startTransaction();
     psql::insertJob(txn, now, uuidStr.c_str(), in);
