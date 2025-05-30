@@ -127,7 +127,6 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
     }
     else
     {
-      responseJson = nlohmann::json();
       responseJson["code"] = 999;
       responseJson["message"] = "invalid command";
     }
