@@ -26,21 +26,21 @@ inline void operator >>(nlohmann::json requestJson, get_job_request& request)
     request.jobId = requestJson["body"]["job_id"];
 }
 
-inline nlohmann::json formatResponse(get_job_response responseData)
+inline void operator <<(nlohmann::json& responseJson, std::optional<get_job_response> response)
 {
-  nlohmann::json responseJson;
-  responseJson["header"]["code"] = responseData.code;
-
-  if( responseData.body.has_value() )
+  if( response.has_value() )
   {
-    auto&& body = responseData.body.value();
-    responseJson["body"]["transaction_timestamp"] = time_t_to_string(body.transactionTime);
-    responseJson["body"]["transaction_id"] = body.transactionId;
-    responseJson["body"]["job_id"] = body.jobId;
-    responseJson["body"]["job_name"] = body.jobName;
-  }
+    responseJson["header"]["code"] = response->code;
 
-  return responseJson;
+    if( response->body.has_value() )
+    {
+      auto&& body = response->body.value();
+      responseJson["body"]["transaction_timestamp"] = time_t_to_string(body.transactionTime);
+      responseJson["body"]["transaction_id"] = body.transactionId;
+      responseJson["body"]["job_id"] = body.jobId;
+      responseJson["body"]["job_name"] = body.jobName;
+    }
+  }
 }
 
 inline std::optional<get_job_response> run(std::shared_ptr<database> db, get_job_request requestData)

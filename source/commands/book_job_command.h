@@ -30,12 +30,13 @@ inline void operator >>(nlohmann::json requestJson, book_job_request& request)
   }
 }
 
-inline nlohmann::json formatResponse(book_job_response responseData)
+inline void operator <<(nlohmann::json& responseJson, std::optional<book_job_response> response)
 {
-  nlohmann::json responseJson;
-  responseJson["header"]["code"] = responseData.code;
-  responseJson["body"]["job_id"] = responseData.jobId;
-  return responseJson;
+  if( response.has_value() )
+  {
+    responseJson["header"]["code"] = response->code;
+    responseJson["body"]["job_id"] = response->jobId;
+  }
 }
 
 inline std::optional<book_job_response> run(std::shared_ptr<database> db, book_job_request requestData)

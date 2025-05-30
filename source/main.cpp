@@ -109,7 +109,7 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
     nlohmann::json requestJson = nlohmann::json::parse(req.body());
 
     std::string command = requestJson["header"]["command"];
-    std::optional<nlohmann::json> responseJson;
+    nlohmann::json responseJson;
 
     std::cout << "Command: " << command << "\n";
 
@@ -117,28 +117,26 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
     {
       book_job_request requestData;
       requestJson >> requestData;
-      auto responseData = s->run(requestData);
-      responseJson = responseData.has_value() ? formatResponse(responseData.value()) : std::optional<nlohmann::json>();
+      responseJson << s->run(requestData);
     }
     else if( command == "get-job" )
     {
       get_job_request requestData;
       requestJson >> requestData;
-      auto responseData = s->run(requestData);
-      responseJson = responseData.has_value() ? formatResponse(responseData.value()) : std::optional<nlohmann::json>();
+      responseJson << s->run(requestData);
     }
     else
     {
       responseJson = nlohmann::json();
-      responseJson.value()["code"] = 999;
-      responseJson.value()["message"] = "invalid command";
+      responseJson["code"] = 999;
+      responseJson["message"] = "invalid command";
     }
 
     boost::beast::http::response<boost::beast::http::string_body> res(boost::beast::http::status::ok, req.version());
     res.set(boost::beast::http::field::server, "Beast");
     res.set(boost::beast::http::field::content_type, "text/json");
     res.keep_alive(req.keep_alive());
-    res.body() = to_string(responseJson.value());
+    res.body() = to_string(responseJson);
     res.prepare_payload();
     return res;
   }
