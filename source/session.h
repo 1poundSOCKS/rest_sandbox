@@ -2,8 +2,7 @@
 
 #include "database.h"
 #include "psql/psql.h"
-#include "commands/get_job_cmd.h"
-#include "commands/book_job_cmd.h"
+#include "commands/command.h"
 
 struct book_job_request_data
 {
@@ -23,8 +22,8 @@ public:
   session(const char* dbConnection);
   void initialize();
   std::string dbVersion();
-  std::optional<book_job_cmd::response_data> run(book_job_cmd::request_data requestData);
-  std::optional<get_job_cmd::response_data> run(get_job_cmd::request_data requestData);
+  std::optional<book_job_response> run(book_job_request requestData);
+  std::optional<get_job_response> run(get_job_request requestData);
 
 private:
 
@@ -51,14 +50,14 @@ inline std::string session::dbVersion()
   return version;
 }
 
-inline std::optional<book_job_cmd::response_data> session::run(book_job_cmd::request_data requestData)
+inline std::optional<book_job_response> session::run(book_job_request requestData)
 {
   auto jobId = requestData.jobId.has_value() ? requestData.jobId.value() : ++m_maxJobId;
   requestData.jobId = jobId;
-  return book_job_cmd::run(m_db, requestData);
+  return ::run(m_db, requestData);
 }
 
-inline std::optional<get_job_cmd::response_data> session::run(get_job_cmd::request_data requestData)
+inline std::optional<get_job_response> session::run(get_job_request requestData)
 {
-  return get_job_cmd::run(m_db, requestData);
+  return ::run(m_db, requestData);
 }

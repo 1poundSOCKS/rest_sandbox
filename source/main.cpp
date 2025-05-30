@@ -115,15 +115,17 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
 
     if( command == "book-job" )
     {
-      book_job_cmd::request_data requestData = book_job_cmd::formatRequest(requestJson);
+      book_job_request requestData;
+      requestJson >> requestData;
       auto responseData = s->run(requestData);
-      responseJson = responseData.has_value() ? book_job_cmd::formatResponse(responseData.value()) : std::optional<nlohmann::json>();
+      responseJson = responseData.has_value() ? formatResponse(responseData.value()) : std::optional<nlohmann::json>();
     }
     else if( command == "get-job" )
     {
-      get_job_cmd::request_data requestData = get_job_cmd::formatRequest(requestJson);
+      get_job_request requestData;
+      requestJson >> requestData;
       auto responseData = s->run(requestData);
-      responseJson = responseData.has_value() ? get_job_cmd::formatResponse(responseData.value()) : std::optional<nlohmann::json>();
+      responseJson = responseData.has_value() ? formatResponse(responseData.value()) : std::optional<nlohmann::json>();
     }
     else
     {
