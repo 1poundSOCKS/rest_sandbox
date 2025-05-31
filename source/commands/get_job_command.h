@@ -43,7 +43,7 @@ inline void operator <<(nlohmann::json& responseJson, std::optional<get_job_resp
   }
 }
 
-inline std::optional<get_job_response> run(std::shared_ptr<database> db, get_job_request requestData)
+inline std::optional<get_job_response> getJob(std::shared_ptr<database> db, get_job_request requestData)
 {
   std::optional<get_job_response> responseData;
 

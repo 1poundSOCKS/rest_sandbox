@@ -117,13 +117,13 @@ boost::beast::http::response<boost::beast::http::string_body> ProcessRequest(boo
     {
       book_job_request requestData;
       requestJson >> requestData;
-      responseJson << s->run(requestData);
+      responseJson << s->bookJob(requestData);
     }
     else if( command == "get-job" )
     {
       get_job_request requestData;
       requestJson >> requestData;
-      responseJson << s->run(requestData);
+      responseJson << s->getJob(requestData);
     }
     else
     {

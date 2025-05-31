@@ -39,7 +39,7 @@ inline void operator <<(nlohmann::json& responseJson, std::optional<book_job_res
   }
 }
 
-inline std::optional<book_job_response> run(std::shared_ptr<database> db, book_job_request requestData)
+inline std::optional<book_job_response> bookJob(std::shared_ptr<database> db, book_job_request requestData)
 {
   std::time_t now = std::time(nullptr);
   boost::uuids::uuid uuid = boost::uuids::random_generator()();

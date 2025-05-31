@@ -22,8 +22,8 @@ public:
   session(const char* dbConnection);
   void initialize();
   std::string dbVersion();
-  std::optional<book_job_response> run(book_job_request requestData);
-  std::optional<get_job_response> run(get_job_request requestData);
+  std::optional<book_job_response> bookJob(book_job_request requestData);
+  std::optional<get_job_response> getJob(get_job_request requestData);
 
 private:
 
@@ -50,14 +50,14 @@ inline std::string session::dbVersion()
   return version;
 }
 
-inline std::optional<book_job_response> session::run(book_job_request requestData)
+inline std::optional<book_job_response> session::bookJob(book_job_request requestData)
 {
   auto jobId = requestData.jobId.has_value() ? requestData.jobId.value() : ++m_maxJobId;
   requestData.jobId = jobId;
-  return ::run(m_db, requestData);
+  return ::bookJob(m_db, requestData);
 }
 
-inline std::optional<get_job_response> session::run(get_job_request requestData)
+inline std::optional<get_job_response> session::getJob(get_job_request requestData)
 {
-  return ::run(m_db, requestData);
+  return ::getJob(m_db, requestData);
 }
