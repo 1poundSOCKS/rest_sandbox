@@ -16,6 +16,25 @@ inline std::string time_t_to_string(std::time_t t)
     return oss.str();
 }
 
+struct transaction
+{
+  transaction();
+  transaction(std::string id, std::time_t time);
+  std::string id;
+  std::time_t time;
+};
+
+transaction::transaction()
+{
+  time = std::time(nullptr);
+  boost::uuids::uuid uuid = boost::uuids::random_generator()();
+  id = boost::lexical_cast<std::string>(uuid);
+}
+
+transaction::transaction(std::string id, std::time_t time) : id(id), time(time)
+{
+}
+
 class database
 {
 public:

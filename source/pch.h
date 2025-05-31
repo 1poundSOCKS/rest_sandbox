@@ -10,6 +10,7 @@
 #include <chrono>
 #include <unistd.h>
 #include <sstream>
+#include <map>
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>

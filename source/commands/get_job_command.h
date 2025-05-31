@@ -1,6 +1,7 @@
 #pragma once
 
 #include <database.h>
+#include "job.h"
 
 struct get_job_request
 {
@@ -9,16 +10,8 @@ struct get_job_request
 
 struct get_job_response
 {
-  struct body_type
-  {
-    std::time_t transactionTime;
-    std::string transactionId;
-    int64_t jobId;
-    std::string jobName;
-  };
-
   int64_t code;
-  std::optional<body_type> body;
+  std::optional<job> jobData;
 };
 
 inline void operator >>(nlohmann::json requestJson, get_job_request& request)
@@ -32,13 +25,13 @@ inline void operator <<(nlohmann::json& responseJson, std::optional<get_job_resp
   {
     responseJson["header"]["code"] = response->code;
 
-    if( response->body.has_value() )
+    if( response->jobData.has_value() )
     {
-      auto&& body = response->body.value();
-      responseJson["body"]["transaction_timestamp"] = time_t_to_string(body.transactionTime);
-      responseJson["body"]["transaction_id"] = body.transactionId;
-      responseJson["body"]["job_id"] = body.jobId;
-      responseJson["body"]["job_name"] = body.jobName;
+      auto&& job = response->jobData.value();
+      responseJson["body"]["transaction_timestamp"] = time_t_to_string(job.trx.time);
+      responseJson["body"]["transaction_id"] = job.trx.id;
+      responseJson["body"]["job_id"] = job.id;
+      responseJson["body"]["job_name"] = job.name;
     }
   }
 }
@@ -56,10 +49,11 @@ inline std::optional<get_job_response> getJob(std::shared_ptr<database> db, get_
     responseData = get_job_response();
     responseData->code = 0;
 
-    responseData->body = get_job_response::body_type
-    {
-      outputData->transactionTime, 
-      outputData->transactionId, 
+    responseData->jobData = {
+      {
+        outputData->transactionId,
+        outputData->transactionTime 
+      }, 
       requestData.jobId, 
       outputData->jobName
     };
