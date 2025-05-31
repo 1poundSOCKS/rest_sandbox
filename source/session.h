@@ -46,7 +46,10 @@ inline std::optional<book_job_response> session::bookJob(book_job_request reques
   requestData.jobId = jobId;
   transaction trx;
   auto response = ::bookJob(m_db, trx, requestData);
-  m_jobs[jobId] = { trx, jobId, requestData.jobName, requestData.duration };
+  if( response.has_value() && response->code == 0 )
+  {
+    m_jobs[jobId] = { trx, jobId, requestData.jobName, requestData.duration };
+  }
   return response;
 }
 
