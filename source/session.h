@@ -4,18 +4,6 @@
 #include "psql/psql.h"
 #include "commands/command.h"
 
-struct book_job_request_data
-{
-  std::optional<int64_t> jobId;
-  std::string jobName;
-};
-
-struct book_job_response_data
-{
-  int64_t code;
-  int64_t jobId;
-};
-
 class session
 {
 public:
